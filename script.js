@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Close sidebar on mobile after clicking
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth <= 992) {
                 sidebar.classList.remove('active');
                 if (sidebarOverlay) sidebarOverlay.classList.remove('active');
             }

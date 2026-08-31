@@ -920,9 +920,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 @media (max-width: 992px) {
     .dashboard-grid { grid-template-columns: 1fr; }
     .gantt-sidebar { width: 300px; }
-}
 
-@media (max-width: 768px) {
     /* Main Layout */
     .sidebar {
         position: fixed;
@@ -961,6 +959,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
         justify-content: flex-end; 
     }
     .search-box { display: none; } /* Hide search on mobile */
+}
+
+@media (max-width: 768px) {
 
     /* Gantt Responsiveness */
     .gantt-wrapper {

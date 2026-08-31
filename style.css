@@ -252,38 +252,39 @@ h1, h2, h3, h4, h5, h6 { color: var(--gray-900); font-weight: 600; }
 .user-name { color: white; font-weight: 500; font-size: 0.875rem; }
 .user-role { font-size: 0.75rem; }
 
-/* --- Sidebar Collapsed State (Desktop) --- */
+/* --- Sidebar Collapsed State (Global) --- */
+.sidebar.collapsed {
+    width: var(--sidebar-width-collapsed);
+}
+.sidebar.collapsed .logo,
+.sidebar.collapsed .nav-item span,
+.sidebar.collapsed .db-capacity,
+.sidebar.collapsed .user-details {
+    display: none;
+}
+.sidebar.collapsed .sidebar-header {
+    padding: 0;
+    justify-content: center !important;
+}
+.sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 0.875rem 0;
+}
+.sidebar.collapsed .nav-item i {
+    margin: 0;
+}
+.sidebar.collapsed .sidebar-footer {
+    padding: 1rem 0;
+    display: flex;
+    justify-content: center;
+}
+.sidebar.collapsed .user-info {
+    justify-content: center;
+}
+
+/* --- Sidebar Desktop Specifics --- */
 @media (min-width: 993px) {
     #sidebarToggle { display: none; }
-
-    .sidebar.collapsed {
-        width: var(--sidebar-width-collapsed);
-    }
-    .sidebar.collapsed .logo,
-    .sidebar.collapsed .nav-item span,
-    .sidebar.collapsed .db-capacity,
-    .sidebar.collapsed .user-details {
-        display: none;
-    }
-    .sidebar.collapsed .sidebar-header {
-        padding: 0;
-        justify-content: center !important;
-    }
-    .sidebar.collapsed .nav-item {
-        justify-content: center;
-        padding: 0.875rem 0;
-    }
-    .sidebar.collapsed .nav-item i {
-        margin: 0;
-    }
-    .sidebar.collapsed .sidebar-footer {
-        padding: 1rem 0;
-        display: flex;
-        justify-content: center;
-    }
-    .sidebar.collapsed .user-info {
-        justify-content: center;
-    }
 }
 
 /* --- Main Content --- */
@@ -962,12 +963,19 @@ input[type="range"]::-webkit-slider-thumb:hover {
     /* Main Layout */
     .sidebar {
         position: fixed;
-        left: -var(--sidebar-width);
+        left: 0;
+        top: 0;
         height: 100%;
         z-index: 10000;
         box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     }
-    .sidebar.active { left: 0; }
+    .sidebar:not(.collapsed) {
+        width: var(--sidebar-width);
+    }
+    .main-content {
+        margin-left: var(--sidebar-width-collapsed);
+        width: calc(100% - var(--sidebar-width-collapsed));
+    }
     
     .sidebar-overlay {
         position: fixed;

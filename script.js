@@ -17,11 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Toggle Sidebar (Mobile & Desktop)
     function toggleSidebarAction() {
+        sidebar.classList.toggle('collapsed');
         if (window.innerWidth <= 992) {
-            sidebar.classList.toggle('active');
             if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
-        } else {
-            sidebar.classList.toggle('collapsed');
         }
     }
 
@@ -37,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Close sidebar when clicking overlay
     if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', () => {
-            sidebar.classList.remove('active');
+            sidebar.classList.add('collapsed');
             sidebarOverlay.classList.remove('active');
         });
     }
@@ -71,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Close sidebar on mobile after clicking
             if (window.innerWidth <= 992) {
-                sidebar.classList.remove('active');
+                sidebar.classList.add('collapsed');
                 if (sidebarOverlay) sidebarOverlay.classList.remove('active');
             }
         });

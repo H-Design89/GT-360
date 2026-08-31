@@ -173,6 +173,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--gray-900); font-weight: 600; }
     flex: 1;
     padding: 1.5rem 1rem;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .nav-item {
@@ -379,6 +380,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--gray-900); font-weight: 600; }
     padding: 2rem;
     overflow-y: auto;
     position: relative;
+    -webkit-overflow-scrolling: touch;
 }
 
 .content-section {
@@ -768,6 +770,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--gray-900); font-weight: 600; }
     position: relative;
     background-image: linear-gradient(to right, var(--gray-100) 1px, transparent 1px);
     background-size: 40px 100%; /* Mỗi cột ngày rộng 40px */
+    -webkit-overflow-scrolling: touch;
 }
 
 .gantt-timeline-header {
@@ -1009,8 +1012,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
         border-bottom: 3px solid var(--gray-300);
         max-height: 40vh; /* Occupy top half of screen */
     }
-    .gantt-sidebar-content {
+    .gantt-sidebar-body {
         overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    .gantt-timeline {
+        width: 100%;
+        min-width: 0;
     }
     .gantt-info-row {
         flex-wrap: wrap;

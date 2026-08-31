@@ -15,11 +15,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const contentSections = document.querySelectorAll('.content-section');
     const pageTitle = document.getElementById('pageTitle');
 
-    // Toggle Sidebar (Mobile)
+    // Toggle Sidebar (Mobile & Desktop)
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
+            if (window.innerWidth <= 992) {
+                sidebar.classList.toggle('active');
+                if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
+            } else {
+                sidebar.classList.toggle('collapsed');
+            }
         });
     }
 

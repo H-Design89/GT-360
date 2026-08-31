@@ -44,6 +44,7 @@
     
     /* Metrics */
     --sidebar-width: 260px;
+    --sidebar-width-collapsed: 80px;
     --header-height: 70px;
     --border-radius: 12px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -249,6 +250,41 @@ h1, h2, h3, h4, h5, h6 { color: var(--gray-900); font-weight: 600; }
 .user-details { display: flex; flex-direction: column; }
 .user-name { color: white; font-weight: 500; font-size: 0.875rem; }
 .user-role { font-size: 0.75rem; }
+
+/* --- Sidebar Collapsed State (Desktop) --- */
+@media (min-width: 993px) {
+    .sidebar.collapsed {
+        width: var(--sidebar-width-collapsed);
+    }
+    .sidebar.collapsed .logo span,
+    .sidebar.collapsed .nav-item span,
+    .sidebar.collapsed .db-capacity,
+    .sidebar.collapsed .user-details {
+        display: none;
+    }
+    .sidebar.collapsed .sidebar-header {
+        padding: 0;
+        justify-content: center;
+    }
+    .sidebar.collapsed .logo {
+        justify-content: center;
+    }
+    .sidebar.collapsed .nav-item {
+        justify-content: center;
+        padding: 0.875rem 0;
+    }
+    .sidebar.collapsed .nav-item i {
+        margin: 0;
+    }
+    .sidebar.collapsed .sidebar-footer {
+        padding: 1rem 0;
+        display: flex;
+        justify-content: center;
+    }
+    .sidebar.collapsed .user-info {
+        justify-content: center;
+    }
+}
 
 /* --- Main Content --- */
 .main-content {

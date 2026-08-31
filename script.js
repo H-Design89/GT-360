@@ -16,15 +16,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageTitle = document.getElementById('pageTitle');
 
     // Toggle Sidebar (Mobile & Desktop)
+    function toggleSidebarAction() {
+        if (window.innerWidth <= 992) {
+            sidebar.classList.toggle('active');
+            if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
+        } else {
+            sidebar.classList.toggle('collapsed');
+        }
+    }
+
     if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', () => {
-            if (window.innerWidth <= 992) {
-                sidebar.classList.toggle('active');
-                if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
-            } else {
-                sidebar.classList.toggle('collapsed');
-            }
-        });
+        sidebarToggle.addEventListener('click', toggleSidebarAction);
+    }
+    
+    const sidebarToggleInside = document.getElementById('sidebarToggleInside');
+    if (sidebarToggleInside) {
+        sidebarToggleInside.addEventListener('click', toggleSidebarAction);
     }
 
     // Close sidebar when clicking overlay

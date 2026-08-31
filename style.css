@@ -254,10 +254,12 @@ h1, h2, h3, h4, h5, h6 { color: var(--gray-900); font-weight: 600; }
 
 /* --- Sidebar Collapsed State (Desktop) --- */
 @media (min-width: 993px) {
+    #sidebarToggle { display: none; }
+
     .sidebar.collapsed {
         width: var(--sidebar-width-collapsed);
     }
-    .sidebar.collapsed .logo span,
+    .sidebar.collapsed .logo,
     .sidebar.collapsed .nav-item span,
     .sidebar.collapsed .db-capacity,
     .sidebar.collapsed .user-details {
@@ -265,10 +267,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--gray-900); font-weight: 600; }
     }
     .sidebar.collapsed .sidebar-header {
         padding: 0;
-        justify-content: center;
-    }
-    .sidebar.collapsed .logo {
-        justify-content: center;
+        justify-content: center !important;
     }
     .sidebar.collapsed .nav-item {
         justify-content: center;
@@ -988,14 +987,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
     }
     
     .top-header {
-        flex-wrap: wrap;
-        padding: 1rem;
-        gap: 1rem;
+        padding: 0 1rem;
     }
-    .header-left { width: 100%; }
-    .header-right { 
-        width: 100%; 
-        justify-content: flex-end; 
+    .page-title {
+        font-size: 1.1rem;
+    }
+    .header-left, .header-right { 
+        gap: 0.5rem; 
     }
     .search-box { display: none; } /* Hide search on mobile */
 }

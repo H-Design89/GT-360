@@ -205,6 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     window.ganttBaseDate = null;
     window.GANTT_TOTAL_DAYS = 35;
+    window.ganttCurrentPage = 1;
+    window.ganttItemsPerPage = 15;
+
 
     const ganttSidebarBody = document.getElementById('ganttSidebarBody');
     const ganttTimelineHeader = document.getElementById('ganttTimelineHeader');
@@ -299,6 +302,40 @@ document.addEventListener('DOMContentLoaded', () => {
             return startD <= maxDate && endD >= baseDate;
         });
 
+        const totalItems = visibleOrders.length;
+        const totalPages = Math.ceil(totalItems / window.ganttItemsPerPage) || 1;
+        
+        if (window.ganttCurrentPage > totalPages) {
+            window.ganttCurrentPage = totalPages;
+        }
+        if (window.ganttCurrentPage < 1) window.ganttCurrentPage = 1;
+
+        const startIndex = (window.ganttCurrentPage - 1) * window.ganttItemsPerPage;
+        const endIndex = startIndex + window.ganttItemsPerPage;
+        const paginatedOrders = visibleOrders.slice(startIndex, endIndex);
+
+        const ganttPageInfo = document.getElementById('ganttPageInfo');
+        const ganttPagePrev = document.getElementById('ganttPagePrev');
+        const ganttPageNext = document.getElementById('ganttPageNext');
+        const ganttPageSelect = document.getElementById('ganttPageSelect');
+
+        if (ganttPageInfo) {
+            ganttPageInfo.innerText = `${totalItems > 0 ? startIndex + 1 : 0} - ${Math.min(endIndex, totalItems)} / ${totalItems}`;
+        }
+        if (ganttPagePrev) ganttPagePrev.disabled = window.ganttCurrentPage <= 1;
+        if (ganttPageNext) ganttPageNext.disabled = window.ganttCurrentPage >= totalPages;
+        
+        if (ganttPageSelect) {
+            ganttPageSelect.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.text = `Trang ${i}`;
+                if (i === window.ganttCurrentPage) opt.selected = true;
+                ganttPageSelect.appendChild(opt);
+            }
+        }
+
         const formatShortDate = (dateStr) => {
             if (!dateStr) return '';
             const d = new Date(dateStr);
@@ -306,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
         };
 
-        visibleOrders.forEach((order, index) => {
+        paginatedOrders.forEach((order, index) => {
             const isCompleted = order.status === 'Hoàn thành';
             const bgStyle = isCompleted ? 'background-color: var(--success-light);' : '';
             // Tính toán độ dài thanh (Bar)
@@ -400,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="gantt-info-row" style="cursor: pointer; ${bgStyle}" onclick="window.toggleGanttRow('${order.id.replace(/'/g, "\\'")}', this.querySelector('.gantt-toggle-btn'))">
                         <button class="gantt-toggle-btn" onclick="event.stopPropagation(); window.toggleGanttRow('${order.id.replace(/'/g, "\\'")}', this)"><i class="fa-solid fa-chevron-down"></i></button>
                         <div class="gantt-stt" style="min-width: 24px; text-align: center; font-weight: bold; color: var(--gray-500); font-size: 0.9rem; margin-right: 0.5rem; border-right: 1px solid var(--gray-200); padding-right: 0.5rem;">
-                            ${index + 1}
+                            ${startIndex + index + 1}
                         </div>
                         <div class="order-brief" style="width: 100%; min-width: 0;">
                             <span class="ob-id" title="Bấm để copy mã lệnh" style="cursor: pointer;" onclick="window.copyOrderId(this, event, '${order.id.replace(/'/g, "\\'")}')">${order.id} <i class="fa-regular fa-copy" style="margin-left: 2px; opacity: 0.7;"></i></span>
@@ -583,6 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (ganttStatusFilter) {
         ganttStatusFilter.addEventListener('change', () => {
+            window.ganttCurrentPage = 1;
             reRenderGantt();
         });
     }
@@ -617,6 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.customGanttEndDate.setDate(window.customGanttEndDate.getDate() + 364);
                     }
                     
+                    window.ganttCurrentPage = 1;
                     reRenderGantt();
                 } else {
                     alert('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.');
@@ -633,6 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.customGanttEndDate = null;
         window.ganttBaseDate.setMonth(window.ganttBaseDate.getMonth() - 1);
         window.GANTT_TOTAL_DAYS = new Date(window.ganttBaseDate.getFullYear(), window.ganttBaseDate.getMonth() + 1, 0).getDate();
+        window.ganttCurrentPage = 1;
         reRenderGantt();
     });
 
@@ -642,6 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.customGanttEndDate = null;
         window.ganttBaseDate.setMonth(window.ganttBaseDate.getMonth() + 1);
         window.GANTT_TOTAL_DAYS = new Date(window.ganttBaseDate.getFullYear(), window.ganttBaseDate.getMonth() + 1, 0).getDate();
+        window.ganttCurrentPage = 1;
         reRenderGantt();
     });
 
@@ -651,8 +692,34 @@ document.addEventListener('DOMContentLoaded', () => {
         window.customGanttEndDate = null;
         window.ganttBaseDate = new Date(now.getFullYear(), now.getMonth(), 1);
         window.GANTT_TOTAL_DAYS = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        window.ganttCurrentPage = 1;
         reRenderGantt();
     });
+
+    const ganttPagePrev = document.getElementById('ganttPagePrev');
+    const ganttPageNext = document.getElementById('ganttPageNext');
+    const ganttPageSelect = document.getElementById('ganttPageSelect');
+
+    if (ganttPagePrev) {
+        ganttPagePrev.addEventListener('click', () => {
+            if (window.ganttCurrentPage > 1) {
+                window.ganttCurrentPage--;
+                reRenderGantt();
+            }
+        });
+    }
+    if (ganttPageNext) {
+        ganttPageNext.addEventListener('click', () => {
+            window.ganttCurrentPage++;
+            reRenderGantt();
+        });
+    }
+    if (ganttPageSelect) {
+        ganttPageSelect.addEventListener('change', (e) => {
+            window.ganttCurrentPage = parseInt(e.target.value);
+            reRenderGantt();
+        });
+    }
 
     // ==========================================
     // ORDER MODAL & LOGIC
@@ -723,16 +790,68 @@ document.addEventListener('DOMContentLoaded', () => {
         window.updateTaskColor(taskRow);
     };
 
-    // Auto-update color on change
+    // Auto-update color on change and sync order start date to Chuẩn bị tasks
     document.getElementById('orderForm').addEventListener('change', function(e) {
         if (e.target.classList.contains('task-end') || e.target.classList.contains('task-actual-end') || e.target.classList.contains('task-prog')) {
             const taskRow = e.target.closest('.task-row');
             if (taskRow) window.updateTaskColor(taskRow);
         }
+
+        if (e.target.id === 'orderStartDate' && e.target.value) {
+            let startVal = e.target.value;
+            let parts = startVal.split('-');
+            if (parts.length === 3) {
+                let y = parseInt(parts[0], 10);
+                let m = parseInt(parts[1], 10) - 1;
+                let day = parseInt(parts[2], 10);
+                let d = new Date(y, m, day);
+                d.setDate(d.getDate() + 2);
+                let endY = d.getFullYear();
+                let endM = String(d.getMonth() + 1).padStart(2, '0');
+                let endD = String(d.getDate()).padStart(2, '0');
+                let endVal = `${endY}-${endM}-${endD}`;
+                
+                const taskNames = document.querySelectorAll('.task-name');
+                taskNames.forEach(input => {
+                    if (input.value === 'Chuẩn bị') {
+                        const taskRow = input.closest('.task-row');
+                        if (taskRow) {
+                            const taskStart = taskRow.querySelector('.task-start');
+                            const taskEnd = taskRow.querySelector('.task-end');
+                            if (taskStart && !taskStart.value) {
+                                taskStart.value = startVal;
+                            }
+                            if (taskEnd && !taskEnd.value) {
+                                taskEnd.value = endVal;
+                            }
+                        }
+                    }
+                });
+            }
+        }
     });
 
     if (addProductBtn && productListContainer) {
         addProductBtn.addEventListener('click', () => {
+            let prepStart = '';
+            let prepEnd = '';
+            const orderStartDateInput = document.getElementById('orderStartDate');
+            if (orderStartDateInput && orderStartDateInput.value) {
+                prepStart = orderStartDateInput.value;
+                let parts = prepStart.split('-');
+                if (parts.length === 3) {
+                    let y = parseInt(parts[0], 10);
+                    let m = parseInt(parts[1], 10) - 1;
+                    let day = parseInt(parts[2], 10);
+                    let d = new Date(y, m, day);
+                    d.setDate(d.getDate() + 2);
+                    let endY = d.getFullYear();
+                    let endM = String(d.getMonth() + 1).padStart(2, '0');
+                    let endD = String(d.getDate()).padStart(2, '0');
+                    prepEnd = `${endY}-${endM}-${endD}`;
+                }
+            }
+
             const row = document.createElement('div');
             row.className = 'product-row';
             row.innerHTML = `
@@ -754,9 +873,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="task-list-container">
                     <div class="task-row">
                         <div class="task-row-top">
-                            <input type="text" class="form-control task-name" placeholder="Tên công việc" list="taskNameSuggestions" required>
-                            <input type="date" class="form-control task-start" required title="Bắt đầu">
-                            <input type="date" class="form-control task-end" required title="Dự kiến xong">
+                            <input type="text" class="form-control task-name" placeholder="Tên công việc" list="taskNameSuggestions" value="Chuẩn bị" required>
+                            <input type="date" class="form-control task-start" required title="Bắt đầu" value="${prepStart}">
+                            <input type="date" class="form-control task-end" required title="Dự kiến xong" value="${prepEnd}">
                         </div>
                         <div class="task-row-bottom">
                             <input type="text" class="form-control task-assignee" placeholder="Phụ trách" list="assigneeSuggestions">
@@ -883,6 +1002,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (createOrderBtn && orderModal) {
         createOrderBtn.addEventListener('click', () => {
             document.getElementById('orderForm').reset();
+
+            let prepStart = '';
+            let prepEnd = '';
+            const orderStartDateInput = document.getElementById('orderStartDate');
+            if (orderStartDateInput && orderStartDateInput.value) {
+                prepStart = orderStartDateInput.value;
+                let parts = prepStart.split('-');
+                if (parts.length === 3) {
+                    let y = parseInt(parts[0], 10);
+                    let m = parseInt(parts[1], 10) - 1;
+                    let day = parseInt(parts[2], 10);
+                    let d = new Date(y, m, day);
+                    d.setDate(d.getDate() + 2);
+                    let endY = d.getFullYear();
+                    let endM = String(d.getMonth() + 1).padStart(2, '0');
+                    let endD = String(d.getDate()).padStart(2, '0');
+                    prepEnd = `${endY}-${endM}-${endD}`;
+                }
+            }
+
             if (productListContainer) {
                 productListContainer.innerHTML = `
                     <div class="product-row">
@@ -904,9 +1043,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="task-list-container">
                             <div class="task-row">
                                 <div class="task-row-top">
-                                    <input type="text" class="form-control task-name" placeholder="Tên công việc" list="taskNameSuggestions" required>
-                                    <input type="date" class="form-control task-start" required title="Bắt đầu">
-                                    <input type="date" class="form-control task-end" required title="Dự kiến xong">
+                                    <input type="text" class="form-control task-name" placeholder="Tên công việc" list="taskNameSuggestions" value="Chuẩn bị" required>
+                                    <input type="date" class="form-control task-start" required title="Bắt đầu" value="${prepStart}">
+                                    <input type="date" class="form-control task-end" required title="Dự kiến xong" value="${prepEnd}">
                                 </div>
                                 <div class="task-row-bottom">
                                     <input type="text" class="form-control task-assignee" placeholder="Phụ trách" list="assigneeSuggestions">
@@ -1032,9 +1171,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('orderActualFinishDate').value = todayStr;
                 }
             } else {
-                if (document.getElementById('orderStatus').value !== 'Hoàn thành') {
-                    document.getElementById('orderActualFinishDate').value = '';
-                }
+                document.getElementById('orderStatus').value = 'Đang SX';
+                document.getElementById('orderActualFinishDate').value = '';
             }
 
             // Giữ lại một trường string gộp danh sách Model để lưu vào sheet Production cũ (tùy chọn)
@@ -1667,6 +1805,29 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Lỗi cập nhật tiến độ!');
         }
     };
+
+    // Auto-hide datalist suggestions when input is empty
+    document.addEventListener('focusin', function(e) {
+        if (e.target.tagName === 'INPUT' && e.target.hasAttribute('list')) {
+            const listId = e.target.getAttribute('list');
+            if (listId) {
+                e.target.setAttribute('data-list-id', listId);
+                if (e.target.value.length === 0) {
+                    e.target.removeAttribute('list');
+                }
+            }
+        }
+    });
+
+    document.addEventListener('input', function(e) {
+        if (e.target.tagName === 'INPUT' && e.target.hasAttribute('data-list-id')) {
+            if (e.target.value.length > 0) {
+                e.target.setAttribute('list', e.target.getAttribute('data-list-id'));
+            } else {
+                e.target.removeAttribute('list');
+            }
+        }
+    });
 
     } catch (error) {
         console.error(error);

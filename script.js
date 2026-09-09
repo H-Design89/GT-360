@@ -1344,9 +1344,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     let finalActualFinishDate = row['Ngày hoàn thành thực tế'] || '';
-                    if (progressVal === 100 && maxOrderEndDate) {
-                        finalActualFinishDate = parseDateStr(maxOrderEndDate);
-                    }
 
                     return {
                         id: row['Số lệnh sản xuất'] || row['ID'] || 'N/A',

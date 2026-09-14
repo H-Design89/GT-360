@@ -1232,7 +1232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Ngày hoàn thành thực tế': document.getElementById('orderActualFinishDate').value,
                 'Trạng thái': document.getElementById('orderStatus').value,
                 'Tiến độ': document.getElementById('orderProgress').value,
-                'Số ngày công': document.getElementById('orderManDays') ? document.getElementById('orderManDays').value : '',
+                'Số công': document.getElementById('orderManDays') ? document.getElementById('orderManDays').value : '',
                 'tasks': allTasks
             };
 
@@ -2060,7 +2060,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('orderAssignee').value = rawOrder['Người phụ trách'] || '';
         const manDaysInput = document.getElementById('orderManDays');
-        if (manDaysInput) manDaysInput.value = rawOrder['Số ngày công'] || '';
+        if (manDaysInput) manDaysInput.value = rawOrder['Số công'] || '';
         
         // Xử lý ngày tháng tránh bị lệch múi giờ (lùi 1 ngày) do UTC
         function formatDate(dateVal) {
@@ -2269,6 +2269,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // TÍNH TOÁN NĂNG LỰC SẢN XUẤT (CAPACITY)
     // ==========================================
+    const maxManDaysInput = document.getElementById('maxManDaysInput');
+    if (maxManDaysInput) {
+        const savedMax = localStorage.getItem('gt360_max_capacity');
+        if (savedMax) {
+            maxManDaysInput.value = savedMax;
+        }
+    }
+
     window.updateCapacityChart = function() {
         const maxManDaysInput = document.getElementById('maxManDaysInput');
         if (!maxManDaysInput || !window.productionOrdersList) return;
@@ -2276,11 +2284,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let maxManDays = parseInt(maxManDaysInput.value) || 1040;
         let activeManDays = 0;
         
-        // Sum "Số ngày công" for active orders (Tiến độ < 100)
+        // Sum "Số công" for active orders (Tiến độ < 100)
         window.productionOrdersList.forEach(order => {
             const progress = parseInt(order['Tiến độ']) || 0;
             if (progress < 100) {
-                const manDays = parseFloat(order['Số ngày công']) || 0;
+                const manDays = parseFloat(order['Số công']) || 0;
                 activeManDays += manDays;
             }
         });
@@ -2321,6 +2329,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateCapacityBtn = document.getElementById('updateCapacityBtn');
     if (updateCapacityBtn) {
         updateCapacityBtn.addEventListener('click', () => {
+            const maxManDaysInput = document.getElementById('maxManDaysInput');
+            if (maxManDaysInput) {
+                localStorage.setItem('gt360_max_capacity', maxManDaysInput.value);
+            }
             if (window.updateCapacityChart) window.updateCapacityChart();
             alert("Đã cập nhật định mức tải trọng!");
         });

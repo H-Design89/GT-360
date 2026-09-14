@@ -1124,25 +1124,33 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
     /* Gantt Responsiveness */
     .gantt-wrapper {
-        flex-direction: column;
+        flex-direction: row;
     }
     .gantt-sidebar {
-        width: 100%;
-        border-right: none;
-        border-bottom: 3px solid var(--gray-300);
-        max-height: 40vh; /* Occupy top half of screen */
+        width: 180px;
+        border-right: 1px solid var(--gray-300);
+        border-bottom: none;
+        max-height: none;
     }
     .gantt-sidebar-body {
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: auto;
     }
     .gantt-timeline {
-        width: 100%;
+        flex: 1;
+        width: auto;
         min-width: 0;
     }
     .gantt-info-row {
-        flex-wrap: wrap;
-        gap: 0.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2rem;
+    }
+    .gantt-info-row span {
+        font-size: 0.75rem !important;
+    }
+    .gantt-order-title {
+        font-size: 0.85rem !important;
     }
     .order-actions {
         width: 100%;

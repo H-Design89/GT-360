@@ -1084,6 +1084,43 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 @media (max-width: 768px) {
+    /* Production Management UI Fixes */
+    .prod-tabs {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    .prod-tab-btn {
+        flex: 1 1 auto;
+        justify-content: center;
+        padding: 0.5rem;
+    }
+    
+    .gantt-header-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .gantt-actions {
+        flex-direction: column;
+        align-items: stretch !important;
+        width: 100%;
+    }
+    .gantt-search-filter, .gantt-status-filter, .gantt-custom-range {
+        border-right: none !important;
+        padding-right: 0 !important;
+        width: 100%;
+    }
+    .gantt-search-filter input, .gantt-status-filter select {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+    .gantt-custom-range {
+        flex-wrap: wrap;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+
 
     /* Gantt Responsiveness */
     .gantt-wrapper {

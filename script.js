@@ -2284,12 +2284,13 @@ document.addEventListener('DOMContentLoaded', () => {
         let maxManDays = parseInt(maxManDaysInput.value) || 1040;
         let activeManDays = 0;
         
-        // Sum "Số công" for active orders (Tiến độ < 100)
+        // Sum "Số công" for active orders (Tiêu hao dần theo tiến độ)
         window.productionOrdersList.forEach(order => {
             const progress = parseInt(order['Tiến độ']) || 0;
             if (progress < 100) {
-                const manDays = parseFloat(order['Số công']) || 0;
-                activeManDays += manDays;
+                const totalManDays = parseFloat(order['Số công']) || 0;
+                const remainingManDays = totalManDays * (1 - (progress / 100));
+                activeManDays += remainingManDays;
             }
         });
         
@@ -2300,8 +2301,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (percent > 200) percent = 200; // Cap visual rotation
         
         // Update DOM texts
-        document.getElementById('activeManDaysValue').innerText = activeManDays.toLocaleString();
-        document.getElementById('idleManDaysValue').innerText = idleManDays.toLocaleString();
+        document.getElementById('activeManDaysValue').innerText = Math.round(activeManDays).toLocaleString();
+        document.getElementById('idleManDaysValue').innerText = Math.round(idleManDays).toLocaleString();
         document.getElementById('capacityPercent').innerText = Math.round(percent) + '%';
         
         // Update Gauge Fill (0% = -45deg, 100% = 135deg. Total span = 180deg)

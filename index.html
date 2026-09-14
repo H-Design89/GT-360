@@ -245,6 +245,7 @@
                             <button class="prod-tab-btn active" data-tab="prod-orders"><i class="fa-solid fa-layer-group"></i> Đơn hàng</button>
                             <button class="prod-tab-btn" data-tab="prod-logs"><i class="fa-solid fa-book-journal-whills"></i> Nhật ký sản xuất</button>
                             <button class="prod-tab-btn" data-tab="prod-issues"><i class="fa-solid fa-triangle-exclamation"></i> Sự cố & Phản hồi</button>
+                            <button class="prod-tab-btn" data-tab="prod-capacity"><i class="fa-solid fa-chart-pie"></i> Biểu đồ Năng suất</button>
                         </div>
                     </div>
 
@@ -384,6 +385,40 @@
                             </table>
                         </div>
                     </div>
+                    <!-- BIỂU ĐỒ NĂNG SUẤT TAB -->
+                    <div class="prod-tab-content" id="prod-capacity">
+                        <div class="panel" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 2rem;">
+                            <h3>Đánh giá Tải trọng Xưởng (WIP - Man-days)</h3>
+                            <p style="color: var(--gray-600); margin-bottom: 2rem; font-size: 0.9rem;">Biểu đồ thể hiện phần trăm năng lực sản xuất đang được sử dụng dựa trên tổng số ngày công của các Đơn hàng đang chạy.</p>
+                            
+                            <div style="margin-bottom: 2rem; display: flex; justify-content: center; align-items: center; gap: 1rem;">
+                                <label style="font-weight: 600;">Định mức Tối đa (Số ngày công/Tháng):</label>
+                                <input type="number" id="maxManDaysInput" class="form-control" value="1040" style="width: 120px; text-align: center; font-size: 1.1rem; font-weight: bold; color: var(--primary);">
+                                <button class="btn btn-primary" id="updateCapacityBtn" style="padding: 0.4rem 1rem;">Cập nhật</button>
+                            </div>
+
+                            <!-- Gauge Chart Container -->
+                            <div class="gauge-container" style="position: relative; width: 300px; height: 150px; margin: 0 auto; overflow: hidden;">
+                                <div class="gauge-bg" style="position: absolute; top: 0; left: 0; width: 100%; height: 200%; border-radius: 50%; background: var(--gray-200); border: 30px solid var(--gray-200); box-sizing: border-box;"></div>
+                                <div class="gauge-fill" id="capacityGaugeFill" style="position: absolute; top: 0; left: 0; width: 100%; height: 200%; border-radius: 50%; border: 30px solid var(--success); border-bottom-color: transparent !important; border-right-color: transparent !important; box-sizing: border-box; transform: rotate(-45deg); transition: transform 1s ease-out;"></div>
+                                <div class="gauge-cover" style="position: absolute; top: 30px; left: 30px; right: 30px; bottom: -120px; background: white; border-radius: 50%;"></div>
+                                <div class="gauge-text" style="position: absolute; bottom: 0; left: 0; width: 100%; text-align: center;">
+                                    <span id="capacityPercent" style="font-size: 2.5rem; font-weight: 800; color: var(--gray-800);">0%</span>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 2rem;">
+                                <div class="stat-box" style="background: var(--gray-50); padding: 1rem 2rem; border-radius: 8px; border: 1px solid var(--gray-200);">
+                                    <div style="font-size: 0.85rem; color: var(--gray-600); margin-bottom: 0.5rem;">Đang sản xuất</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary);"><span id="activeManDaysValue">0</span> công</div>
+                                </div>
+                                <div class="stat-box" style="background: var(--gray-50); padding: 1rem 2rem; border-radius: 8px; border: 1px solid var(--gray-200);">
+                                    <div style="font-size: 0.85rem; color: var(--gray-600); margin-bottom: 0.5rem;">Dư thừa (Có thể nhận)</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold; color: var(--success);"><span id="idleManDaysValue">1040</span> công</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 <!-- 4. TASK MANAGEMENT -->
@@ -470,9 +505,13 @@
                     </div>
                     
                     <div class="form-row">
-                        <div class="form-group full">
+                        <div class="form-group half">
                             <label>Người Phụ Trách</label>
                             <input type="text" id="orderAssignee" class="form-control" placeholder="Người phụ trách" list="assigneeSuggestions">
+                        </div>
+                        <div class="form-group half">
+                            <label>Số ngày công (Ước tính)</label>
+                            <input type="number" id="orderManDays" class="form-control" placeholder="VD: 120" min="0">
                         </div>
                         <input type="hidden" id="orderStatus" value="Đang SX">
                     </div>

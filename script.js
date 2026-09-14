@@ -1232,6 +1232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Ngày hoàn thành thực tế': document.getElementById('orderActualFinishDate').value,
                 'Trạng thái': document.getElementById('orderStatus').value,
                 'Tiến độ': document.getElementById('orderProgress').value,
+                'Số ngày công': document.getElementById('orderManDays') ? document.getElementById('orderManDays').value : '',
                 'tasks': allTasks
             };
 
@@ -1454,6 +1455,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 initGanttGrid(window.ganttBaseDate, window.GANTT_TOTAL_DAYS);
                 renderGanttOrders(orders, window.ganttBaseDate, window.GANTT_TOTAL_DAYS);
                 updateGanttDateRangeText(window.ganttBaseDate);
+                if (window.updateCapacityChart) window.updateCapacityChart();
             } else {
                 initGanttGrid();
                 renderGanttOrders([]);
@@ -2057,6 +2059,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         document.getElementById('orderAssignee').value = rawOrder['Người phụ trách'] || '';
+        const manDaysInput = document.getElementById('orderManDays');
+        if (manDaysInput) manDaysInput.value = rawOrder['Số ngày công'] || '';
         
         // Xử lý ngày tháng tránh bị lệch múi giờ (lùi 1 ngày) do UTC
         function formatDate(dateVal) {
@@ -2261,4 +2265,65 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error(error);
         alert("Lỗi hệ thống: " + error.message + "\n" + error.stack);
     }
+
+    // ==========================================
+    // TÍNH TOÁN NĂNG LỰC SẢN XUẤT (CAPACITY)
+    // ==========================================
+    window.updateCapacityChart = function() {
+        const maxManDaysInput = document.getElementById('maxManDaysInput');
+        if (!maxManDaysInput || !window.productionOrdersList) return;
+        
+        let maxManDays = parseInt(maxManDaysInput.value) || 1040;
+        let activeManDays = 0;
+        
+        // Sum "Số ngày công" for active orders (Tiến độ < 100)
+        window.productionOrdersList.forEach(order => {
+            const progress = parseInt(order['Tiến độ']) || 0;
+            if (progress < 100) {
+                const manDays = parseFloat(order['Số ngày công']) || 0;
+                activeManDays += manDays;
+            }
+        });
+        
+        let idleManDays = maxManDays - activeManDays;
+        if (idleManDays < 0) idleManDays = 0;
+        
+        let percent = (activeManDays / maxManDays) * 100;
+        if (percent > 200) percent = 200; // Cap visual rotation
+        
+        // Update DOM texts
+        document.getElementById('activeManDaysValue').innerText = activeManDays.toLocaleString();
+        document.getElementById('idleManDaysValue').innerText = idleManDays.toLocaleString();
+        document.getElementById('capacityPercent').innerText = Math.round(percent) + '%';
+        
+        // Update Gauge Fill (0% = -45deg, 100% = 135deg. Total span = 180deg)
+        const gaugeFill = document.getElementById('capacityGaugeFill');
+        if (gaugeFill) {
+            // formula: degrees = -45 + (percent/100)*180
+            let deg = -45 + (percent / 100) * 180;
+            if (deg > 135 + 180) deg = 315; // cap display if > 200%
+            gaugeFill.style.transform = `rotate(${deg}deg)`;
+            
+            // Color changing based on load
+            if (percent < 60) {
+                gaugeFill.style.borderColor = "var(--success)";
+                document.getElementById('capacityPercent').style.color = "var(--success)";
+            } else if (percent < 85) {
+                gaugeFill.style.borderColor = "var(--warning)";
+                document.getElementById('capacityPercent').style.color = "var(--warning)";
+            } else {
+                gaugeFill.style.borderColor = "var(--danger)";
+                document.getElementById('capacityPercent').style.color = "var(--danger)";
+            }
+        }
+    };
+    
+    const updateCapacityBtn = document.getElementById('updateCapacityBtn');
+    if (updateCapacityBtn) {
+        updateCapacityBtn.addEventListener('click', () => {
+            if (window.updateCapacityChart) window.updateCapacityChart();
+            alert("Đã cập nhật định mức tải trọng!");
+        });
+    }
+
 });

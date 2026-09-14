@@ -12,7 +12,7 @@ const SPREADSHEET_ID = '1mAYpxxZC9Nj2l1V27-PAdQY3PWeCrHmM8vKEISSPRgc';
  */
 function setupSheets() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const requiredSheets = ['CRM', 'Production', 'Tasks', 'Inventory', 'Order_Tasks'];
+  const requiredSheets = ['CRM', 'Production', 'Tasks', 'Inventory', 'Order_Tasks', 'Production_Logs'];
   
   requiredSheets.forEach(name => {
     if (!ss.getSheetByName(name)) {
@@ -49,6 +49,9 @@ function doGet(e) {
         break;
       case 'getInventory':
         data = getSheetData('Inventory');
+        break;
+      case 'getLogs':
+        data = getSheetData('Production_Logs');
         break;
       default:
         return responseJSON({ status: 'error', message: 'Invalid action' });
@@ -93,6 +96,15 @@ function doPost(e) {
         if (result.success) {
            deleteTasksInSheet(payload['Số lệnh sản xuất']);
         }
+        break;
+      case 'addLog':
+        result = addRowToSheet('Production_Logs', payload);
+        break;
+      case 'deleteLog':
+        result = deleteRowInSheet('Production_Logs', payload['ID'], 'ID');
+        break;
+      case 'updateLog':
+        result = editRowInSheet('Production_Logs', payload, 'ID');
         break;
       default:
         return responseJSON({ status: 'error', message: 'Invalid POST action' });

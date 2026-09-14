@@ -41,6 +41,7 @@
                     <i class="fa-solid fa-industry"></i>
                     <span>Quản lý Sản xuất</span>
                 </li>
+
                 <li class="nav-item" data-target="task">
                     <i class="fa-solid fa-list-check"></i>
                     <span>Công việc</span>
@@ -239,20 +240,30 @@
 
                 <!-- 3. PRODUCTION MANAGEMENT -->
                 <section id="production" class="content-section">
-                    <div class="section-header">
-                        <h2>Quản lý sản xuất</h2>
-                        <button class="btn btn-primary" id="createOrderBtn">
-                            <i class="fa-solid fa-plus"></i> Tạo Đơn hàng
-                        </button>
+                    <div class="section-header" style="margin-bottom: 1.5rem;">
+                        <div class="prod-tabs">
+                            <button class="prod-tab-btn active" data-tab="prod-orders"><i class="fa-solid fa-layer-group"></i> Đơn hàng</button>
+                            <button class="prod-tab-btn" data-tab="prod-logs"><i class="fa-solid fa-book-journal-whills"></i> Nhật ký sản xuất</button>
+                            <button class="prod-tab-btn" data-tab="prod-issues"><i class="fa-solid fa-triangle-exclamation"></i> Sự cố & Phản hồi</button>
+                        </div>
                     </div>
 
-                    <div class="gantt-container panel">
+                    <div class="prod-tab-content active" id="prod-orders">
+                        <div style="margin-bottom: 1rem; display: flex; justify-content: flex-end;">
+                            <button class="btn btn-primary" id="createOrderBtn">
+                                <i class="fa-solid fa-plus"></i> Tạo Đơn hàng
+                            </button>
+                        </div>
+                        <div class="gantt-container panel">
                         <div class="gantt-header-controls">
                             <div class="date-range-display" id="ganttDateRange">
                                 <!-- JS sẽ điền ngày tháng -->
                                 Tháng 8, 2026
                             </div>
-                            <div class="gantt-actions" style="display: flex; align-items: center; gap: 1rem;">
+                            <div class="gantt-actions" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                                <div class="gantt-search-filter" style="border-right: 1px solid var(--gray-300); padding-right: 1rem;">
+                                    <input type="text" id="ganttSearchInput" class="form-control" placeholder="Tìm tên KH, Lệnh SX, Model..." style="padding: 0.2rem 0.5rem; font-size: 0.85rem; width: 220px;">
+                                </div>
                                 <div class="gantt-status-filter" style="border-right: 1px solid var(--gray-300); padding-right: 1rem;">
                                     <select id="ganttStatusFilter" class="form-control" style="padding: 0.2rem 0.5rem; font-size: 0.85rem; border-color: var(--primary); color: var(--primary); font-weight: 500;">
                                         <option value="all" selected>Tất cả lệnh</option>
@@ -303,6 +314,74 @@
                                 <select id="ganttPageSelect" class="form-control" style="width: auto; padding: 0.2rem 0.5rem; font-size: 0.85rem; border-color: var(--gray-300); border-radius: 4px;"></select>
                                 <button class="btn btn-sm btn-outline" id="ganttPageNext" disabled>Trang sau <i class="fa-solid fa-chevron-right"></i></button>
                             </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- NHẬT KÝ SẢN XUẤT TAB -->
+                    <div class="prod-tab-content" id="prod-logs">
+                        <div style="margin-bottom: 1rem; display: flex; justify-content: flex-end;">
+                            <button class="btn btn-primary" id="refreshLogsBtn">
+                                <i class="fa-solid fa-rotate"></i> Tải lại
+                            </button>
+                        </div>
+                        
+                        <div class="table-container panel">
+                            <div class="table-toolbar">
+                                <div class="search-group" style="flex: 1;">
+                                    <input type="text" id="logsSearch" placeholder="Tìm mã LSX, nội dung...">
+                                </div>
+                            </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Mã Lệnh SX</th>
+                                    <th>Người ghi</th>
+                                    <th>Nội dung/ Ghi chú</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody">
+                                <!-- Dữ liệu mẫu -->
+                                <tr>
+                                    <td colspan="5" class="text-center placeholder-text">Đang tải nhật ký...</td>
+                                </tr>
+                            </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- XỬ LÝ SỰ CỐ TAB -->
+                    <div class="prod-tab-content" id="prod-issues">
+                        <div style="margin-bottom: 1rem; display: flex; justify-content: flex-end;">
+                            <button class="btn btn-primary" id="refreshIssuesBtn">
+                                <i class="fa-solid fa-rotate"></i> Tải lại
+                            </button>
+                        </div>
+                        
+                        <div class="table-container panel">
+                            <div class="table-toolbar">
+                                <div class="search-group" style="flex: 1;">
+                                    <input type="text" id="issuesSearch" placeholder="Tìm mã LSX, phản hồi, sự cố...">
+                                </div>
+                            </div>
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Thời gian</th>
+                                        <th>Mã Lệnh SX</th>
+                                        <th>Người báo cáo</th>
+                                        <th>Nội dung Sự cố / Phản hồi</th>
+                                        <th>Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="issuesTableBody">
+                                    <tr>
+                                        <td colspan="5" class="text-center placeholder-text">Đang tải dữ liệu sự cố / phản hồi...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </section>
@@ -465,6 +544,41 @@
                             <button type="button" class="btn btn-outline btn-sm" id="addProductBtn" style="margin-top: 16px;"><i class="fa-solid fa-folder-plus"></i> Thêm Model (Sản phẩm)</button>
                             <!-- Giữ lại input ẩn để code cũ không bị lỗi nếu có -->
                             <input type="hidden" id="orderModel">
+                        </div>
+                    </div>
+                    
+                    <!-- PHẦN NHẬT KÝ SẢN XUẤT (Chỉ hiển thị khi Edit mode) -->
+                    <div class="order-logs-container" id="orderLogsSection" style="display: none; margin-top: 1.5rem; border-top: 2px solid var(--gray-200); padding-top: 1rem;">
+                        <div class="modal-tabs" style="margin-bottom: 1.5rem;">
+                            <button type="button" class="modal-tab-btn active" data-target="modal-logs-tab"><i class="fa-solid fa-book-journal-whills"></i> Nhật ký SX</button>
+                            <button type="button" class="modal-tab-btn" data-target="modal-issues-tab"><i class="fa-solid fa-triangle-exclamation"></i> Sự cố / Phản hồi</button>
+                        </div>
+                        
+                        <!-- Tab Nhật ký -->
+                        <div id="modal-logs-tab" class="modal-tab-content active">
+                            <div class="logs-timeline" id="modalLogsTimeline" style="margin-bottom: 1rem; max-height: 250px; overflow-y: auto; padding-right: 0.5rem;">
+                                <!-- JS sẽ render các mục nhật ký ở đây -->
+                                <p class="placeholder-text text-sm">Chưa có nhật ký nào cho lệnh này.</p>
+                            </div>
+                            <div class="add-log-box" style="display: flex; gap: 0.5rem; align-items: flex-start; background: var(--gray-50); padding: 0.75rem; border-radius: 8px;">
+                                <div style="flex: 1;">
+                                    <textarea id="newLogContent" class="form-control" placeholder="Nhập nhật ký tiến độ..." style="width: 100%; min-height: 60px; resize: vertical; font-size: 0.85rem; border-color: var(--gray-300);"></textarea>
+                                </div>
+                                <button type="button" class="btn btn-primary" id="saveLogBtn" style="white-space: nowrap; align-self: flex-end; padding: 0.5rem 1rem;"><i class="fa-solid fa-paper-plane"></i> Lưu</button>
+                            </div>
+                        </div>
+
+                        <!-- Tab Sự cố -->
+                        <div id="modal-issues-tab" class="modal-tab-content" style="display: none;">
+                            <div class="logs-timeline" id="modalIssuesTimeline" style="margin-bottom: 1rem; max-height: 250px; overflow-y: auto; padding-right: 0.5rem;">
+                                <p class="placeholder-text text-sm">Chưa có sự cố / phản hồi nào được ghi nhận.</p>
+                            </div>
+                            <div class="add-log-box" style="display: flex; gap: 0.5rem; align-items: flex-start; background: var(--gray-50); padding: 0.75rem; border-radius: 8px;">
+                                <div style="flex: 1;">
+                                    <textarea id="newIssueContent" class="form-control" placeholder="Nội dung phản hồi từ khách, hàng lỗi, hoàn trả, hoặc sự cố..." style="width: 100%; min-height: 60px; resize: vertical; font-size: 0.85rem; border-color: var(--gray-300);"></textarea>
+                                </div>
+                                <button type="button" class="btn btn-primary" id="saveIssueBtn" style="white-space: nowrap; align-self: flex-end; padding: 0.5rem 1rem;"><i class="fa-solid fa-paper-plane"></i> Ghi nhận</button>
+                            </div>
                         </div>
                     </div>
                 </form>

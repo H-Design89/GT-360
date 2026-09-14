@@ -75,6 +75,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Production Sub-Tabs Logic
+    const prodTabBtns = document.querySelectorAll('.prod-tab-btn');
+    const prodTabContents = document.querySelectorAll('.prod-tab-content');
+    
+    prodTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active from all tabs
+            prodTabBtns.forEach(b => b.classList.remove('active'));
+            prodTabContents.forEach(c => c.classList.remove('active'));
+            
+            // Add active to clicked tab
+            btn.classList.add('active');
+            const targetId = btn.getAttribute('data-tab');
+            const targetContent = document.getElementById(targetId);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+        });
+    });
+
     // ==========================================
     // API & DATA SYNC LOGIC
     // ==========================================
@@ -288,12 +308,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const statusFilter = document.getElementById('ganttStatusFilter') ? document.getElementById('ganttStatusFilter').value : 'all';
 
+        const searchInput = document.getElementById('ganttSearchInput') ? document.getElementById('ganttSearchInput').value.trim().toLowerCase() : '';
+
         // Lọc các đơn hàng giao thoa với khoảng nhìn 35 ngày
         const visibleOrders = orders.filter(order => {
             if (!order.startDate || !order.endDate) return false;
             
             if (statusFilter === 'completed' && order.status !== 'Hoàn thành') return false;
             if (statusFilter === 'progress' && order.status === 'Hoàn thành') return false;
+
+            if (searchInput) {
+                const lsx = (order.id || '').toLowerCase();
+                const customer = (order.customerName || '').toLowerCase();
+                const hasModel = (order.products || []).some(p => (p.name || '').toLowerCase().includes(searchInput));
+
+                if (!lsx.includes(searchInput) && !customer.includes(searchInput) && !hasModel) {
+                    return false;
+                }
+            }
 
             const startD = new Date(order.startDate);
             startD.setHours(0,0,0,0);
@@ -620,6 +652,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (ganttStatusFilter) {
         ganttStatusFilter.addEventListener('change', () => {
+            window.ganttCurrentPage = 1;
+            reRenderGantt();
+        });
+    }
+
+    const ganttSearchInput = document.getElementById('ganttSearchInput');
+    if (ganttSearchInput) {
+        ganttSearchInput.addEventListener('input', () => {
             window.ganttCurrentPage = 1;
             reRenderGantt();
         });
@@ -1076,6 +1116,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             document.getElementById('orderEditMode').value = 'false';
             document.getElementById('orderId').disabled = false;
+            
+            const logsSection = document.getElementById('orderLogsSection');
+            if (logsSection) logsSection.style.display = 'none';
             document.getElementById('orderId').value = '';
             document.getElementById('saveOrderBtn').innerText = 'Lưu Lệnh SX';
             document.querySelector('.modal-header h3').innerText = 'Tạo Đơn Hàng (Lệnh Sản Xuất)';
@@ -1429,8 +1472,390 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tự động load dữ liệu khi ứng dụng khởi chạy lần đầu
     // loadCRMData();
     loadProductionData();
+    loadLogsData();
+
+    // ==========================================
+    // LOGS (NHẬT KÝ SẢN XUẤT)
+    // ==========================================
+    window.productionLogsList = [];
+
+    async function loadLogsData() {
+        try {
+            const result = await fetchFromGoogle('getLogs');
+            if (result.status === 'success') {
+                window.productionLogsList = result.data || [];
+                window.renderAllLogsData(window.productionLogsList);
+            }
+        } catch (error) {
+            console.error("Lỗi khi tải nhật ký:", error);
+        }
+    }
+
+    window.renderAllLogsData = function(data) {
+        renderLogsTable(data);
+        renderIssuesTable(data);
+    };
+
+    function renderLogsTable(data) {
+        const tbody = document.getElementById('logsTableBody');
+        if (!tbody) return;
+
+        const logsOnly = (data || []).filter(log => log['Loại'] !== 'Sự cố' && !(log.ID && log.ID.startsWith('ISSUE_')));
+
+        if (logsOnly.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Chưa có nhật ký nào.</td></tr>';
+            return;
+        }
+
+        // Sắp xếp nhật ký mới nhất lên trên
+        const sortedData = [...logsOnly].reverse();
+        tbody.innerHTML = sortedData.map(log => `
+            <tr>
+                <td style="font-size: 0.85rem; color: var(--gray-600);"><i class="fa-regular fa-clock"></i> ${formatShortDateWithTime(log['Thời gian'] || log['Timestamp'])}</td>
+                <td><strong>${log['Mã Lệnh SX'] || log['Mã LSX'] || ''}</strong><br><span class="text-sm text-gray">${log['Khách hàng'] || ''}</span></td>
+                <td>${log['Người ghi'] || ''}</td>
+                <td><div style="max-width: 800px; white-space: pre-wrap; word-wrap: break-word; font-size: 0.9rem;">${formatLinks(log['Nội dung'] || '')}</div></td>
+                <td>
+                    <button class="action-btn edit-btn" onclick="window.editLog('${log.ID}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button class="action-btn delete-btn" onclick="window.deleteLog('${log.ID}')"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function renderIssuesTable(data) {
+        const tbody = document.getElementById('issuesTableBody');
+        if (!tbody) return;
+
+        const issuesOnly = (data || []).filter(log => log['Loại'] === 'Sự cố' || (log.ID && log.ID.startsWith('ISSUE_')));
+
+        if (issuesOnly.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Chưa có sự cố / phản hồi nào.</td></tr>';
+            return;
+        }
+
+        const sortedData = [...issuesOnly].reverse();
+        tbody.innerHTML = sortedData.map(log => `
+            <tr>
+                <td style="font-size: 0.85rem; color: var(--gray-600);"><i class="fa-regular fa-clock"></i> ${formatShortDateWithTime(log['Thời gian'] || log['Timestamp'])}</td>
+                <td><strong>${log['Mã Lệnh SX'] || log['Mã LSX'] || ''}</strong><br><span class="text-sm text-gray">${log['Khách hàng'] || ''}</span></td>
+                <td>${log['Người ghi'] || ''}</td>
+                <td><div style="max-width: 800px; white-space: pre-wrap; word-wrap: break-word; font-size: 0.9rem;">${formatLinks(log['Nội dung'] || '')}</div></td>
+                <td>
+                    <button class="action-btn edit-btn" onclick="window.editLog('${log.ID}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button class="action-btn delete-btn" onclick="window.deleteLog('${log.ID}')"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function formatShortDateWithTime(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function formatLinks(text) {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, function(url) {
+            return `<a href="${url}" target="_blank" style="color: var(--primary); text-decoration: underline; font-weight: 500;"><i class="fa-solid fa-link"></i> Xem link đính kèm</a>`;
+        });
+    }
+
+    const refreshLogsBtn = document.getElementById('refreshLogsBtn');
+    if (refreshLogsBtn) {
+        refreshLogsBtn.addEventListener('click', async () => {
+            const icon = refreshLogsBtn.querySelector('i');
+            icon.classList.add('fa-spin');
+            await loadLogsData();
+            icon.classList.remove('fa-spin');
+        });
+    }
+
+    const refreshIssuesBtn = document.getElementById('refreshIssuesBtn');
+    if (refreshIssuesBtn) {
+        refreshIssuesBtn.addEventListener('click', async () => {
+            const icon = refreshIssuesBtn.querySelector('i');
+            icon.classList.add('fa-spin');
+            await loadLogsData();
+            icon.classList.remove('fa-spin');
+        });
+    }
+
+    const logsSearch = document.getElementById('logsSearch');
+    if (logsSearch) {
+        logsSearch.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = window.productionLogsList.filter(log => {
+                const lsx = (log['Mã Lệnh SX'] || log['Mã LSX'] || '').toLowerCase();
+                const content = (log['Nội dung'] || '').toLowerCase();
+                const kh = (log['Khách hàng'] || '').toLowerCase();
+                return lsx.includes(val) || content.includes(val) || kh.includes(val);
+            });
+            renderLogsTable(filtered);
+        });
+    }
+
+    const issuesSearch = document.getElementById('issuesSearch');
+    if (issuesSearch) {
+        issuesSearch.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = window.productionLogsList.filter(log => {
+                const lsx = (log['Mã Lệnh SX'] || log['Mã LSX'] || '').toLowerCase();
+                const content = (log['Nội dung'] || '').toLowerCase();
+                const kh = (log['Khách hàng'] || '').toLowerCase();
+                return lsx.includes(val) || content.includes(val) || kh.includes(val);
+            });
+            renderIssuesTable(filtered);
+        });
+    }
+
+    // Gửi nhật ký mới
+    // Modal Tabs Logic
+    const modalTabBtns = document.querySelectorAll('.modal-tab-btn');
+    const modalTabContents = document.querySelectorAll('.modal-tab-content');
     
-    // Global functions for Edit and Delete
+    modalTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            modalTabBtns.forEach(b => b.classList.remove('active'));
+            modalTabContents.forEach(c => {
+                c.classList.remove('active');
+                c.style.display = 'none';
+            });
+            btn.classList.add('active');
+            const targetId = btn.getAttribute('data-target');
+            const targetContent = document.getElementById(targetId);
+            if (targetContent) {
+                targetContent.classList.add('active');
+                targetContent.style.display = 'block';
+            }
+        });
+    });
+
+    const saveLogBtn = document.getElementById('saveLogBtn');
+    if (saveLogBtn) {
+        saveLogBtn.addEventListener('click', async () => {
+            const content = document.getElementById('newLogContent').value.trim();
+            if (!content) {
+                alert('Vui lòng nhập nội dung nhật ký hoặc đính kèm link!');
+                return;
+            }
+
+            const orderIdVal = document.getElementById('orderId').value;
+            if (!orderIdVal) return;
+            const fullOrderId = orderIdVal.endsWith('-LSX/KD') ? orderIdVal : orderIdVal + '-LSX/KD';
+            const customer = document.getElementById('orderCustomer').value;
+            const author = 'Admin';
+
+            const originalText = saveLogBtn.innerHTML;
+            saveLogBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
+            saveLogBtn.disabled = true;
+
+            const now = new Date();
+            const payload = {
+                'ID': 'LOG_' + Date.now(),
+                'Thời gian': now.toISOString(),
+                'Mã Lệnh SX': fullOrderId,
+                'Khách hàng': customer,
+                'Người ghi': author,
+                'Nội dung': content,
+                'Loại': 'Nhật ký'
+            };
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'addLog',
+                        payload: payload
+                    })
+                });
+                
+                document.getElementById('newLogContent').value = '';
+                window.productionLogsList.push(payload);
+                renderModalLogs(fullOrderId);
+                renderAllLogsData(window.productionLogsList);
+            } catch (error) {
+                console.error("Lỗi lưu nhật ký:", error);
+                alert("Có lỗi xảy ra khi lưu nhật ký.");
+            } finally {
+                saveLogBtn.innerHTML = originalText;
+                saveLogBtn.disabled = false;
+            }
+        });
+    }
+
+    const saveIssueBtn = document.getElementById('saveIssueBtn');
+    if (saveIssueBtn) {
+        saveIssueBtn.addEventListener('click', async () => {
+            const content = document.getElementById('newIssueContent').value.trim();
+            if (!content) {
+                alert('Vui lòng nhập nội dung phản hồi / sự cố!');
+                return;
+            }
+
+            const orderIdVal = document.getElementById('orderId').value;
+            if (!orderIdVal) return;
+            const fullOrderId = orderIdVal.endsWith('-LSX/KD') ? orderIdVal : orderIdVal + '-LSX/KD';
+            const customer = document.getElementById('orderCustomer').value;
+            const author = 'Admin';
+
+            const originalText = saveIssueBtn.innerHTML;
+            saveIssueBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
+            saveIssueBtn.disabled = true;
+
+            const now = new Date();
+            const payload = {
+                'ID': 'ISSUE_' + Date.now(),
+                'Thời gian': now.toISOString(),
+                'Mã Lệnh SX': fullOrderId,
+                'Khách hàng': customer,
+                'Người ghi': author,
+                'Nội dung': content,
+                'Loại': 'Sự cố'
+            };
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'addLog',
+                        payload: payload
+                    })
+                });
+                
+                document.getElementById('newIssueContent').value = '';
+                window.productionLogsList.push(payload);
+                renderModalLogs(fullOrderId);
+                renderAllLogsData(window.productionLogsList);
+            } catch (error) {
+                console.error("Lỗi lưu sự cố:", error);
+                alert("Có lỗi xảy ra khi lưu sự cố.");
+            } finally {
+                saveIssueBtn.innerHTML = originalText;
+                saveIssueBtn.disabled = false;
+            }
+        });
+    }
+
+    function renderModalLogs(orderId) {
+        const logsTimeline = document.getElementById('modalLogsTimeline');
+        const issuesTimeline = document.getElementById('modalIssuesTimeline');
+        if (!logsTimeline || !issuesTimeline) return;
+
+        const allLogs = window.productionLogsList.filter(log => (log['Mã Lệnh SX'] || log['Mã LSX']) === orderId);
+        
+        const orderLogs = allLogs.filter(log => log['Loại'] !== 'Sự cố' && !(log.ID && log.ID.startsWith('ISSUE_')));
+        const orderIssues = allLogs.filter(log => log['Loại'] === 'Sự cố' || (log.ID && log.ID.startsWith('ISSUE_')));
+        
+        // Render Logs
+        if (orderLogs.length === 0) {
+            logsTimeline.innerHTML = '<p class="placeholder-text text-sm">Chưa có nhật ký nào cho lệnh này.</p>';
+        } else {
+            const sortedOrderLogs = [...orderLogs].reverse();
+            logsTimeline.innerHTML = sortedOrderLogs.map((log, index) => renderLogItemHtml(log, index, sortedOrderLogs.length, false)).join('');
+        }
+
+        // Render Issues
+        if (orderIssues.length === 0) {
+            issuesTimeline.innerHTML = '<p class="placeholder-text text-sm">Chưa có sự cố / phản hồi nào được ghi nhận.</p>';
+        } else {
+            const sortedOrderIssues = [...orderIssues].reverse();
+            issuesTimeline.innerHTML = sortedOrderIssues.map((log, index) => renderLogItemHtml(log, index, sortedOrderIssues.length, true)).join('');
+        }
+    }
+
+    function renderLogItemHtml(log, index, totalLength, isIssue = false) {
+        const dotColor = 'var(--primary)';
+        const borderColor = 'var(--gray-200)';
+        return `
+            <div class="log-item" style="display: flex; gap: 1rem; margin-bottom: 1rem; position: relative;">
+                <div class="log-dot" style="width: 12px; height: 12px; border-radius: 50%; background: ${dotColor}; margin-top: 4px; z-index: 2;"></div>
+                ${index < totalLength - 1 ? `<div class="log-line" style="position: absolute; left: 5px; top: 16px; bottom: -1rem; width: 2px; background: var(--gray-200); z-index: 1;"></div>` : ''}
+                <div class="log-content-box" style="flex: 1; background: #fff; border: 1px solid ${borderColor}; border-radius: 8px; padding: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.8rem; font-weight: 600; color: var(--gray-800);"><i class="fa-solid fa-user-circle"></i> ${log['Người ghi'] || 'Admin'}</span>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span style="font-size: 0.75rem; color: var(--gray-500);"><i class="fa-regular fa-clock"></i> ${formatShortDateWithTime(log['Thời gian'] || log['Timestamp'])}</span>
+                            <button class="ob-btn edit" onclick="window.editLog('${log.ID}')" title="Sửa" style="width: 20px; height: 20px; font-size: 0.75rem;"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="ob-btn delete" onclick="window.deleteLog('${log.ID}')" title="Xóa" style="width: 20px; height: 20px; font-size: 0.75rem;"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--gray-700); white-space: pre-wrap; word-wrap: break-word; line-height: 1.5;">${formatLinks(log['Nội dung'] || '')}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Global functions for Edit and Delete Logs
+    window.editLog = async function(logId) {
+        if (!window.productionLogsList) return;
+        const log = window.productionLogsList.find(l => l.ID === logId);
+        if (!log) return;
+        
+        const newContent = prompt("Chỉnh sửa nội dung nhật ký:", log['Nội dung']);
+        if (newContent !== null && newContent.trim() !== "") {
+            log['Nội dung'] = newContent.trim();
+            renderAllLogsData(window.productionLogsList);
+            const orderId = log['Mã Lệnh SX'] || log['Mã LSX'];
+            if (orderId) {
+                renderModalLogs(orderId);
+            }
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'updateLog',
+                        payload: {
+                            'ID': logId,
+                            'Nội dung': newContent.trim()
+                        }
+                    })
+                });
+            } catch (error) {
+                console.error("Lỗi khi cập nhật nhật ký lên server:", error);
+            }
+        }
+    };
+
+    window.deleteLog = async function(logId) {
+        if (!window.productionLogsList) return;
+        if (confirm("Bạn có chắc chắn muốn xóa mục này không?")) {
+            const index = window.productionLogsList.findIndex(l => l.ID === logId);
+            if (index > -1) {
+                const orderId = window.productionLogsList[index]['Mã Lệnh SX'] || window.productionLogsList[index]['Mã LSX'];
+                window.productionLogsList.splice(index, 1);
+                renderAllLogsData(window.productionLogsList);
+                if (orderId) {
+                    renderModalLogs(orderId);
+                }
+                
+                try {
+                    await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify({
+                            action: 'deleteLog',
+                            payload: { 'ID': logId }
+                        })
+                    });
+                } catch (error) {
+                    console.error("Lỗi khi xóa nhật ký trên server:", error);
+                }
+            }
+        }
+    };
+
+    // Global functions for Edit and Delete Orders
     window.editOrder = function(orderId) {
         if (!window.productionOrdersList) return;
         const rawOrder = window.productionOrdersList.find(o => o['Số lệnh sản xuất'] === orderId || o['ID'] === orderId);
@@ -1659,6 +2084,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const taskRows = document.getElementById('productListContainer').querySelectorAll('.task-row');
         taskRows.forEach(tr => window.initTaskActualEnd(tr));
+
+        const logsSection = document.getElementById('orderLogsSection');
+        if (logsSection) {
+            logsSection.style.display = 'block';
+            renderModalLogs(rawOrder['Số lệnh sản xuất'] || rawOrder['ID']);
+        }
     };
 
     window.deleteOrder = async function(orderId) {

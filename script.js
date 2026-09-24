@@ -1388,6 +1388,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     let finalActualFinishDate = row['Ngày hoàn thành thực tế'] || '';
+                    
+                    if (progressVal === 100) {
+                        let maxTaskActual = null;
+                        if (products && products.length > 0) {
+                            products.forEach(p => {
+                                if (p.actualFinishDate) {
+                                    const d = new Date(p.actualFinishDate);
+                                    if (!isNaN(d.getTime())) {
+                                        if (!maxTaskActual || d > maxTaskActual) maxTaskActual = d;
+                                    }
+                                }
+                            });
+                        }
+                        if (maxTaskActual) {
+                            finalActualFinishDate = parseDateStr(maxTaskActual);
+                        }
+                    }
 
                     return {
                         id: row['Số lệnh sản xuất'] || row['ID'] || 'N/A',

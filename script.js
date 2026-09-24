@@ -899,6 +899,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <input type="text" class="form-control product-model" placeholder="Tên model/Sản phẩm" list="modelSuggestions" required>
                     <input type="number" class="form-control product-qty" placeholder="SL" min="1" required style="width: 80px;">
                     <input type="number" class="form-control product-prog" placeholder="% Xong" min="0" max="100" style="width: 80px;" title="Tiến độ Model">
+                    <button type="button" class="btn btn-outline btn-sm copy-tasks-btn" title="Copy toàn bộ công việc"><i class="fa-solid fa-copy"></i></button>
+                    <button type="button" class="btn btn-outline btn-sm paste-tasks-btn" title="Dán công việc"><i class="fa-solid fa-paste"></i></button>
                     <button type="button" class="btn btn-outline btn-sm remove-product-btn" title="Xóa Model"><i class="fa-solid fa-trash"></i></button>
                 </div>
                 <div class="drawing-links-container" style="padding: 0.5rem 0; border-bottom: 1px dashed var(--gray-200); margin-bottom: 0.5rem;">
@@ -1036,6 +1038,83 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
+            // Copy Tasks
+            if (e.target.closest('.copy-tasks-btn')) {
+                const productRow = e.target.closest('.product-row');
+                const taskRows = productRow.querySelectorAll('.task-row');
+                window.copiedTasksData = [];
+                taskRows.forEach(tRow => {
+                    window.copiedTasksData.push({
+                        name: tRow.querySelector('.task-name').value,
+                        start: tRow.querySelector('.task-start').value,
+                        end: tRow.querySelector('.task-end').value,
+                        assignee: tRow.querySelector('.task-assignee').value,
+                        note: tRow.querySelector('.task-note').value,
+                        prog: tRow.querySelector('.task-prog').value,
+                        actualEnd: tRow.querySelector('.task-actual-end').value
+                    });
+                });
+                const copyBtn = e.target.closest('.copy-tasks-btn');
+                const originalHtml = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+                setTimeout(() => copyBtn.innerHTML = originalHtml, 1500);
+            }
+
+            // Paste Tasks
+            if (e.target.closest('.paste-tasks-btn')) {
+                if (!window.copiedTasksData || window.copiedTasksData.length === 0) {
+                    alert('Chưa có công việc nào được copy!');
+                    return;
+                }
+                const productRow = e.target.closest('.product-row');
+                const taskListContainer = productRow.querySelector('.task-list-container');
+                taskListContainer.innerHTML = ''; // Clear current tasks
+
+                window.copiedTasksData.forEach(task => {
+                    const div = document.createElement('div');
+                    div.className = 'task-row';
+                    div.innerHTML = `
+                        <div class="task-row-top">
+                            <input type="text" class="form-control task-name" placeholder="Tên công việc" list="taskNameSuggestions" value="${task.name}" required>
+                            <input type="date" class="form-control task-start" required title="Bắt đầu" value="${task.start}">
+                            <input type="date" class="form-control task-end" required title="Dự kiến xong" value="${task.end}">
+                        </div>
+                        <div class="task-row-bottom">
+                            <input type="text" class="form-control task-assignee" placeholder="Phụ trách" list="assigneeSuggestions" value="${task.assignee}">
+                            <input type="text" class="form-control task-note" placeholder="Ghi chú" value="${task.note}">
+                            <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" style="width: 80px;" value="${task.prog}">
+                        </div>
+                        <div class="task-row-actions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--gray-200); padding-top: 0.5rem; margin-top: 0.25rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 0.75rem; color: var(--gray-600);"><i class="fa-solid fa-flag-checkered"></i> Xong:</span>
+                                <input type="date" class="form-control task-actual-end" title="Thực tế xong" style="width: auto; padding: 0.2rem 0.4rem; font-size: 0.75rem; height: 26px; border: 1px solid var(--gray-300); border-radius: 4px;" value="${task.actualEnd}">
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button type="button" class="complete-task-btn" style="background: var(--success-light); color: var(--success); border: none; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem;" title="Hoàn thành (100%)">
+                                    <i class="fa-solid fa-check-circle"></i> Hoàn thành
+                                </button>
+                                <button type="button" class="remove-task-btn" style="background: var(--danger-light); color: var(--danger); border: none; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem;" title="Xóa công việc">
+                                    <i class="fa-solid fa-trash-can"></i> Xóa
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    taskListContainer.appendChild(div);
+                    window.initTaskActualEnd(div);
+                });
+
+                const removeBtns = taskListContainer.querySelectorAll('.remove-task-btn');
+                if (removeBtns.length === 1) {
+                    removeBtns[0].disabled = true;
+                } else if (removeBtns.length > 1) {
+                    removeBtns.forEach(btn => btn.disabled = false);
+                }
+                
+                const pasteBtn = e.target.closest('.paste-tasks-btn');
+                const originalHtml = pasteBtn.innerHTML;
+                pasteBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+                setTimeout(() => pasteBtn.innerHTML = originalHtml, 1500);
+            }
         });
     }
 
@@ -1069,6 +1148,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <input type="text" class="form-control product-model" placeholder="Tên model/Sản phẩm" list="modelSuggestions" required>
                             <input type="number" class="form-control product-qty" placeholder="SL" min="1" required style="width: 80px;">
                             <input type="number" class="form-control product-prog" placeholder="% Xong" min="0" max="100" style="width: 80px;" title="Tiến độ Model">
+                            <button type="button" class="btn btn-outline btn-sm copy-tasks-btn" title="Copy toàn bộ công việc"><i class="fa-solid fa-copy"></i></button>
+                            <button type="button" class="btn btn-outline btn-sm paste-tasks-btn" title="Dán công việc"><i class="fa-solid fa-paste"></i></button>
                             <button type="button" class="btn btn-outline btn-sm remove-product-btn" disabled title="Xóa Model"><i class="fa-solid fa-trash"></i></button>
                         </div>
                         <div class="drawing-links-container" style="padding: 0.5rem 0; border-bottom: 1px dashed var(--gray-200); margin-bottom: 0.5rem;">
@@ -2058,6 +2139,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <input type="text" class="form-control product-model" placeholder="Tên model/Sản phẩm" value="${m.model}" list="modelSuggestions" required>
                         <input type="number" class="form-control product-qty" placeholder="SL" min="1" value="${m.qty}" required style="width: 80px;">
                         <input type="number" class="form-control product-prog" placeholder="% Xong" min="0" max="100" value="${m.prog}" style="width: 80px;" title="Tiến độ Model">
+                        <button type="button" class="btn btn-outline btn-sm copy-tasks-btn" title="Copy toàn bộ công việc"><i class="fa-solid fa-copy"></i></button>
+                        <button type="button" class="btn btn-outline btn-sm paste-tasks-btn" title="Dán công việc"><i class="fa-solid fa-paste"></i></button>
                         <button type="button" class="btn btn-outline btn-sm remove-product-btn" ${isOnlyModel ? 'disabled' : ''} title="Xóa Model"><i class="fa-solid fa-trash"></i></button>
                     </div>
                     <div class="drawing-links-container" style="padding: 0.5rem 0; border-bottom: 1px dashed var(--gray-200); margin-bottom: 0.5rem;">

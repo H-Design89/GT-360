@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GT-360 | Main Application Script
  */
 
@@ -897,8 +897,8 @@ document.addEventListener('DOMContentLoaded', () => {
             row.innerHTML = `
                 <div class="product-header">
                     <input type="text" class="form-control product-model" placeholder="Tên model/Sản phẩm" list="modelSuggestions" required>
-                    <input type="number" class="form-control product-qty" placeholder="SL" min="1" required style="width: 80px;">
-                    <input type="number" class="form-control product-prog" placeholder="% Xong" min="0" max="100" style="width: 80px;" title="Tiến độ Model">
+                    <input type="number" class="form-control product-qty" placeholder="SL" min="1" required style="width: 55px;">
+                    <input type="number" class="form-control product-prog" placeholder="% Xong" min="0" max="100" style="width: 55px;" title="Tiến độ Model">
                     <button type="button" class="btn btn-outline btn-sm copy-tasks-btn" title="Copy toàn bộ công việc"><i class="fa-solid fa-copy"></i></button>
                     <button type="button" class="btn btn-outline btn-sm paste-tasks-btn" title="Dán công việc"><i class="fa-solid fa-paste"></i></button>
                     <button type="button" class="btn btn-outline btn-sm remove-product-btn" title="Xóa Model"><i class="fa-solid fa-trash"></i></button>
@@ -922,7 +922,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="task-row-bottom">
                             <input type="text" class="form-control task-assignee" placeholder="Phụ trách" list="assigneeSuggestions">
                             <input type="text" class="form-control task-note" placeholder="Ghi chú">
-                            <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" style="width: 80px;">
+                            <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" style="width: 55px;">
                         </div>
                         <div class="task-row-actions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--gray-200); padding-top: 0.5rem; margin-top: 0.25rem;">
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -973,7 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="task-row-bottom">
                         <input type="text" class="form-control task-assignee" placeholder="Phụ trách" list="assigneeSuggestions">
                         <input type="text" class="form-control task-note" placeholder="Ghi chú">
-                        <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" style="width: 80px;">
+                        <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" style="width: 55px;">
                     </div>
                     <div class="task-row-actions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--gray-200); padding-top: 0.5rem; margin-top: 0.25rem;">
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -1082,7 +1082,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="task-row-bottom">
                             <input type="text" class="form-control task-assignee" placeholder="Phụ trách" list="assigneeSuggestions" value="${task.assignee}">
                             <input type="text" class="form-control task-note" placeholder="Ghi chú" value="${task.note}">
-                            <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" style="width: 80px;" value="${task.prog}">
+                            <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" style="width: 55px;" value="${task.prog}">
                         </div>
                         <div class="task-row-actions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--gray-200); padding-top: 0.5rem; margin-top: 0.25rem;">
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -1146,8 +1146,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="product-row">
                         <div class="product-header">
                             <input type="text" class="form-control product-model" placeholder="Tên model/Sản phẩm" list="modelSuggestions" required>
-                            <input type="number" class="form-control product-qty" placeholder="SL" min="1" required style="width: 80px;">
-                            <input type="number" class="form-control product-prog" placeholder="% Xong" min="0" max="100" style="width: 80px;" title="Tiến độ Model">
+                            <input type="number" class="form-control product-qty" placeholder="SL" min="1" required style="width: 55px;">
+                            <input type="number" class="form-control product-prog" placeholder="% Xong" min="0" max="100" style="width: 55px;" title="Tiến độ Model">
                             <button type="button" class="btn btn-outline btn-sm copy-tasks-btn" title="Copy toàn bộ công việc"><i class="fa-solid fa-copy"></i></button>
                             <button type="button" class="btn btn-outline btn-sm paste-tasks-btn" title="Dán công việc"><i class="fa-solid fa-paste"></i></button>
                             <button type="button" class="btn btn-outline btn-sm remove-product-btn" disabled title="Xóa Model"><i class="fa-solid fa-trash"></i></button>
@@ -1171,7 +1171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="task-row-bottom">
                                     <input type="text" class="form-control task-assignee" placeholder="Phụ trách" list="assigneeSuggestions">
                                     <input type="text" class="form-control task-note" placeholder="Ghi chú">
-                                    <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" style="width: 80px;">
+                                    <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" style="width: 55px;">
                                 </div>
                                 <div class="task-row-actions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--gray-200); padding-top: 0.5rem; margin-top: 0.25rem;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -2061,7 +2061,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="task-row-bottom">
                                 <input type="text" class="form-control task-assignee" placeholder="Phụ trách" list="assigneeSuggestions">
                                 <input type="text" class="form-control task-note" placeholder="Ghi chú">
-                                <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" style="width: 80px;">
+                                <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" style="width: 55px;">
                             </div>
                             <div class="task-row-actions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--gray-200); padding-top: 0.5rem; margin-top: 0.25rem;">
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -2092,7 +2092,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="task-row-bottom">
                                     <input type="text" class="form-control task-assignee" placeholder="Phụ trách" value="${t['Phụ trách'] || ''}" list="assigneeSuggestions">
                                     <input type="text" class="form-control task-note" placeholder="Ghi chú" value="${t['Ghi chú'] || ''}">
-                                    <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" value="${t['Tiến độ'] || ''}" style="width: 80px;">
+                                    <input type="number" class="form-control task-prog" placeholder="% Xong" min="0" max="100" value="${t['Tiến độ'] || ''}" style="width: 55px;">
                                 </div>
                                 <div class="task-row-actions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--gray-200); padding-top: 0.5rem; margin-top: 0.25rem;">
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -2137,8 +2137,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 row.innerHTML = `
                     <div class="product-header">
                         <input type="text" class="form-control product-model" placeholder="Tên model/Sản phẩm" value="${m.model}" list="modelSuggestions" required>
-                        <input type="number" class="form-control product-qty" placeholder="SL" min="1" value="${m.qty}" required style="width: 80px;">
-                        <input type="number" class="form-control product-prog" placeholder="% Xong" min="0" max="100" value="${m.prog}" style="width: 80px;" title="Tiến độ Model">
+                        <input type="number" class="form-control product-qty" placeholder="SL" min="1" value="${m.qty}" required style="width: 55px;">
+                        <input type="number" class="form-control product-prog" placeholder="% Xong" min="0" max="100" value="${m.prog}" style="width: 55px;" title="Tiến độ Model">
                         <button type="button" class="btn btn-outline btn-sm copy-tasks-btn" title="Copy toàn bộ công việc"><i class="fa-solid fa-copy"></i></button>
                         <button type="button" class="btn btn-outline btn-sm paste-tasks-btn" title="Dán công việc"><i class="fa-solid fa-paste"></i></button>
                         <button type="button" class="btn btn-outline btn-sm remove-product-btn" ${isOnlyModel ? 'disabled' : ''} title="Xóa Model"><i class="fa-solid fa-trash"></i></button>

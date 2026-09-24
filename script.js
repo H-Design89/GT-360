@@ -2270,10 +2270,34 @@ document.addEventListener('DOMContentLoaded', () => {
     // TÍNH TOÁN NĂNG LỰC SẢN XUẤT (CAPACITY)
     // ==========================================
     const maxManDaysInput = document.getElementById('maxManDaysInput');
+    const chartWorkersInput = document.getElementById('chartWorkersInput');
+    const chartStartDateInput = document.getElementById('chartStartDateInput');
+    const chartEndDateInput = document.getElementById('chartEndDateInput');
+    const chartExtraManDaysInput = document.getElementById('chartExtraManDaysInput');
+    const maxManDaysDisplay = document.getElementById('maxManDaysDisplay');
+    
     if (maxManDaysInput) {
         const savedMax = localStorage.getItem('gt360_max_capacity');
         if (savedMax) {
             maxManDaysInput.value = savedMax;
+            if (maxManDaysDisplay) maxManDaysDisplay.innerText = savedMax;
+        }
+        if (chartWorkersInput && localStorage.getItem('gt360_chart_workers')) {
+            chartWorkersInput.value = localStorage.getItem('gt360_chart_workers');
+        }
+        if (chartStartDateInput && localStorage.getItem('gt360_chart_start')) {
+            chartStartDateInput.value = localStorage.getItem('gt360_chart_start');
+        }
+        if (chartEndDateInput && localStorage.getItem('gt360_chart_end')) {
+            chartEndDateInput.value = localStorage.getItem('gt360_chart_end');
+        }
+        if (chartExtraManDaysInput && localStorage.getItem('gt360_chart_extra')) {
+            chartExtraManDaysInput.value = localStorage.getItem('gt360_chart_extra');
+        }
+        
+        const chartHolidaysInput = document.getElementById('chartHolidaysInput');
+        if (chartHolidaysInput && localStorage.getItem('gt360_chart_holidays')) {
+            chartHolidaysInput.value = localStorage.getItem('gt360_chart_holidays');
         }
     }
 
@@ -2330,12 +2354,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateCapacityBtn = document.getElementById('updateCapacityBtn');
     if (updateCapacityBtn) {
         updateCapacityBtn.addEventListener('click', () => {
-            const maxManDaysInput = document.getElementById('maxManDaysInput');
-            if (maxManDaysInput) {
-                localStorage.setItem('gt360_max_capacity', maxManDaysInput.value);
+            const workers = parseInt(document.getElementById('chartWorkersInput').value) || 0;
+            const start = document.getElementById('chartStartDateInput').value;
+            const end = document.getElementById('chartEndDateInput').value;
+            const extraManDays = parseFloat(document.getElementById('chartExtraManDaysInput').value) || 0;
+            const holidays = parseFloat(document.getElementById('chartHolidaysInput') ? document.getElementById('chartHolidaysInput').value : 0) || 0;
+            
+            if (workers > 0 && start && end) {
+                const startDate = new Date(start);
+                const endDate = new Date(end);
+                
+                // Calculate difference in days (inclusive, excluding Sundays)
+                let diffDays = 0;
+                let currentDate = new Date(startDate);
+                while (currentDate <= endDate) {
+                    // 0 is Sunday in JS
+                    if (currentDate.getDay() !== 0) {
+                        diffDays++;
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                
+                if (diffDays > 0) {
+                    const actualWorkingDays = Math.max(0, diffDays - holidays);
+                    const maxManDays = (actualWorkingDays * workers) + extraManDays;
+                    const maxManDaysInput = document.getElementById('maxManDaysInput');
+                    if (maxManDaysInput) {
+                        maxManDaysInput.value = maxManDays;
+                        localStorage.setItem('gt360_max_capacity', maxManDays);
+                        localStorage.setItem('gt360_chart_workers', workers);
+                        localStorage.setItem('gt360_chart_start', start);
+                        localStorage.setItem('gt360_chart_end', end);
+                        localStorage.setItem('gt360_chart_extra', extraManDays);
+                        localStorage.setItem('gt360_chart_holidays', holidays);
+                    }
+                    
+                    const display = document.getElementById('maxManDaysDisplay');
+                    if (display) display.innerText = maxManDays;
+                    
+                    if (window.updateCapacityChart) window.updateCapacityChart();
+                    alert("Đã cập nhật định mức tải trọng!");
+                } else {
+                    alert("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.");
+                }
+            } else {
+                alert("Vui lòng nhập đầy đủ Số lượng công nhân và Chọn khoảng ngày.");
             }
-            if (window.updateCapacityChart) window.updateCapacityChart();
-            alert("Đã cập nhật định mức tải trọng!");
         });
     }
 

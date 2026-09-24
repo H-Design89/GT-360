@@ -157,7 +157,19 @@ function addRowToSheet(sheetName, objData) {
     sheet.appendRow(newHeaders);
   }
   
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  let headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  
+  // Tự động bổ sung các cột còn thiếu từ objData (ví dụ 'Số công')
+  let headersModified = false;
+  for (const key in objData) {
+    if (key !== 'tasks' && key !== 'action' && headers.indexOf(key) === -1) {
+      headers.push(key);
+      headersModified = true;
+    }
+  }
+  if (headersModified) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
   
   // Check for duplicate ID (assuming ID is usually 'Số lệnh sản xuất' or 'ID')
   let keyColumn = 'Số lệnh sản xuất';
@@ -193,7 +205,22 @@ function editRowInSheet(sheetName, objData, keyColumn) {
   const data = sheet.getDataRange().getValues();
   if (data.length <= 1) return { success: false, message: 'No data to edit' };
   
-  const headers = data[0];
+  let headers = data[0];
+  
+  // Tự động bổ sung các cột còn thiếu từ objData
+  let headersModified = false;
+  for (const key in objData) {
+    if (key !== 'tasks' && key !== 'action' && headers.indexOf(key) === -1) {
+      headers.push(key);
+      headersModified = true;
+    }
+  }
+  if (headersModified) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    // Cập nhật lại data[0] để dùng cho map() bên dưới
+    data[0] = headers;
+  }
+  
   const keyIndex = headers.indexOf(keyColumn);
   if (keyIndex === -1) return { success: false, message: 'Key column not found' };
   

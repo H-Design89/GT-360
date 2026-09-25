@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -57,6 +57,9 @@
             </ul>
 
             <div class="sidebar-footer">
+                <div class="collapsed-sync-icon" title="Trạng thái đồng bộ">
+                    <i class="fa-solid fa-cloud" id="collapsedCloudIcon" style="font-size: 1.25rem; color: var(--gray-400); transition: color 0.3s;"></i>
+                </div>
                 <div class="db-capacity">
                     <div class="capacity-header" style="justify-content: space-between;">
                         <span id="syncStatus" class="text-xs text-gray" style="font-weight: 500;">Unsynced</span>
@@ -520,7 +523,7 @@
                         <div class="form-group half">
                             <label>Số Lệnh Sản Xuất *</label>
                             <div class="input-group">
-                                <input type="text" id="orderId" class="form-control" placeholder="VD: 001" required>
+                                <input type="text" id="orderId" class="form-control" placeholder="VD: 001, HD01, P2..." required>
                                 <span class="input-suffix">-LSX/KD</span>
                             </div>
                         </div>

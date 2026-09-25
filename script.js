@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GT-360 | Main Application Script
  */
 
@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Nút Sync Data (Đồng bộ)
     const syncBtn = document.getElementById('syncBtn');
     const syncStatus = document.getElementById('syncStatus');
+    const cloudIcon = document.getElementById('collapsedCloudIcon');
     
     if (syncBtn) {
         syncBtn.addEventListener('click', async () => {
@@ -112,14 +113,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 syncStatus.innerText = 'Syncing...';
                 syncStatus.style.color = 'var(--gray-500)';
             }
+            if (cloudIcon) {
+                cloudIcon.style.color = 'var(--gray-400)';
+            }
             
             try {
                 // Ví dụ: Load dữ liệu khách hàng
                 await loadCRMData();
+                await loadProductionData();
+                await loadLogsData();
                 
                 if (syncStatus) {
                     syncStatus.innerText = 'Synced';
                     syncStatus.style.color = 'var(--success)';
+                }
+                if (cloudIcon) {
+                    cloudIcon.style.color = '#0ea5e9'; // Sky blue
                 }
             } catch (error) {
                 console.error("Lỗi đồng bộ:", error);
@@ -127,6 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (syncStatus) {
                     syncStatus.innerText = 'Failed';
                     syncStatus.style.color = 'var(--danger)';
+                }
+                if (cloudIcon) {
+                    cloudIcon.style.color = 'var(--gray-400)'; // Gray if failed
                 }
             } finally {
                 icon.classList.remove('fa-spin');
@@ -265,11 +277,12 @@ document.addEventListener('DOMContentLoaded', () => {
             currentDate.setDate(baseDate.getDate() + i);
             
             const isToday = currentDate.getTime() === today.getTime();
+            const isSunday = currentDate.getDay() === 0;
             const dayName = currentDate.toLocaleDateString('vi-VN', { weekday: 'short' });
             const dateNum = currentDate.getDate();
 
             html += `
-                <div class="gantt-date-cell ${isToday ? 'today' : ''}" data-date="${currentDate.toISOString().split('T')[0]}">
+                <div class="gantt-date-cell ${isToday ? 'today' : ''}" data-date="${currentDate.toISOString().split('T')[0]}" ${isSunday ? 'style="color: red;"' : ''}>
                     <span>${dayName}</span>
                     <span>${dateNum}</span>
                 </div>
@@ -488,6 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="ob-actions">
                             <button class="ob-btn edit" onclick="event.stopPropagation(); window.editOrder('${order.id.replace(/'/g, "\\'")}')" title="Sửa toàn bộ lệnh"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="ob-btn clone" onclick="event.stopPropagation(); window.cloneOrder('${order.id.replace(/'/g, "\\'")}')" title="Nhân bản lệnh (để tách đợt)"><i class="fa-solid fa-copy"></i></button>
                             <button class="ob-btn delete" onclick="event.stopPropagation(); window.deleteOrder('${order.id.replace(/'/g, "\\'")}')" title="Xóa lệnh"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
@@ -633,6 +647,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dateRangeEl) {
             if (window.isCustomGanttRange && window.customGanttEndDate) {
                 dateRangeEl.innerText = `Từ ${date.toLocaleDateString('vi-VN')} đến ${window.customGanttEndDate.toLocaleDateString('vi-VN')}`;
+            } else if (date.getDate() !== 1 || window.GANTT_TOTAL_DAYS !== new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()) {
+                const endDate = new Date(date);
+                endDate.setDate(endDate.getDate() + window.GANTT_TOTAL_DAYS - 1);
+                dateRangeEl.innerText = `Từ ${date.toLocaleDateString('vi-VN')} đến ${endDate.toLocaleDateString('vi-VN')}`;
             } else {
                 const month = date.getMonth() + 1;
                 const year = date.getFullYear();
@@ -1384,19 +1402,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     let products = [];
                     
                     if (row.tasks && row.tasks.length > 0) {
-                        const mMap = {};
+                        let currentM = null;
                         row.tasks.forEach(t => {
                             const m = t['Model'] || '';
-                            if (!mMap[m]) {
-                                const q = parseInt(t['Số lượng']) || 0;
+                            const q = parseInt(t['Số lượng']) || 0;
+                            const prog = parseInt(t['Tiến độ Model']) || 0;
+                            const d = t['Bản vẽ'] || '';
+                            
+                            if (!currentM || currentM.name !== m || currentM.qty !== q || currentM.prog !== prog || currentM.drawings !== d) {
+                                currentM = { name: m, qty: q, prog: prog, tasks: [], drawings: d };
+                                products.push(currentM);
                                 totalQty += q;
-                                mMap[m] = { name: m, qty: q, prog: parseInt(t['Tiến độ Model']) || 0, tasks: [], drawings: t['Bản vẽ'] || '' };
                             }
-                            mMap[m].tasks.push(t);
+                            currentM.tasks.push(t);
                         });
                         
                         // Tính toán tiến độ Model dựa trên trung bình cộng tiến độ các Task
-                        products = Object.values(mMap).map(m => {
+                        products.forEach(m => {
                             let minDate = null;
                             let maxDate = null;
                             if (m.tasks.length > 0) {
@@ -1546,9 +1568,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (!window.ganttBaseDate) {
                     const now = new Date();
-                    window.ganttBaseDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    now.setHours(0,0,0,0);
+                    window.ganttBaseDate = new Date(now);
+                    window.ganttBaseDate.setDate(window.ganttBaseDate.getDate() - 15);
+                    window.GANTT_TOTAL_DAYS = 30;
                 }
-                window.GANTT_TOTAL_DAYS = new Date(window.ganttBaseDate.getFullYear(), window.ganttBaseDate.getMonth() + 1, 0).getDate();
 
                 initGanttGrid(window.ganttBaseDate, window.GANTT_TOTAL_DAYS);
                 renderGanttOrders(orders, window.ganttBaseDate, window.GANTT_TOTAL_DAYS);
@@ -1557,6 +1581,14 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 initGanttGrid();
                 renderGanttOrders([]);
+            }
+            if (syncStatus) {
+                syncStatus.innerText = 'Synced';
+                syncStatus.style.color = 'var(--success)';
+            }
+            const cloudIcon = document.getElementById('collapsedCloudIcon');
+            if (cloudIcon) {
+                cloudIcon.style.color = '#0ea5e9'; // Sky blue
             }
         } catch (error) {
             console.error("Lỗi khi tải dữ liệu đơn hàng", error);
@@ -1744,7 +1776,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const orderIdVal = document.getElementById('orderId').value;
             if (!orderIdVal) return;
-            const fullOrderId = orderIdVal.endsWith('-LSX/KD') ? orderIdVal : orderIdVal + '-LSX/KD';
+            const fullOrderId = orderIdVal.trim();
             const customer = document.getElementById('orderCustomer').value;
             const author = 'Admin';
 
@@ -1799,7 +1831,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const orderIdVal = document.getElementById('orderId').value;
             if (!orderIdVal) return;
-            const fullOrderId = orderIdVal.endsWith('-LSX/KD') ? orderIdVal : orderIdVal + '-LSX/KD';
+            const fullOrderId = orderIdVal.trim();
             const customer = document.getElementById('orderCustomer').value;
             const author = 'Admin';
 
@@ -1998,40 +2030,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 return parsed;
             }
 
-            let modelsMap = {}; // key: model name, value: { model, qty, prog, drawings, tasks: [] }
+            let modelsArray = [];
             
             if (rawOrder.tasks && rawOrder.tasks.length > 0) {
                 // Đơn hàng mới có tasks
+                let currentBlock = null;
                 rawOrder.tasks.forEach(t => {
                     const mName = t['Model'] || '';
-                    if (!modelsMap[mName]) {
-                        modelsMap[mName] = {
+                    const mQty = parseInt(t['Số lượng']) || '';
+                    const mProg = t['Tiến độ Model'] || '';
+                    const mDrawings = t['Bản vẽ'] || '';
+                    
+                    if (!currentBlock || currentBlock.model !== mName || currentBlock.qty !== mQty || currentBlock.prog !== mProg || currentBlock.drawings !== mDrawings) {
+                        currentBlock = {
                             model: mName,
-                            qty: t['Số lượng'] || '',
-                            prog: t['Tiến độ Model'] || '',
-                            drawings: t['Bản vẽ'] || '',
+                            qty: mQty,
+                            prog: mProg,
+                            drawings: mDrawings,
                             tasks: []
                         };
+                        modelsArray.push(currentBlock);
                     }
                     if (t['Tên công việc']) {
-                        modelsMap[mName].tasks.push(t);
+                        currentBlock.tasks.push(t);
                     }
                 });
             } else {
                 // Đơn hàng cũ chưa có tasks, parse từ chuỗi
                 const oldParsed = parseOldModelString(rawModel);
                 oldParsed.forEach(p => {
-                    modelsMap[p.model] = {
+                    modelsArray.push({
                         model: p.model,
                         qty: p.qty,
                         prog: p.prog,
                         drawings: '',
                         tasks: [] // Trống
-                    };
+                    });
                 });
             }
             
-            const modelsArray = Object.values(modelsMap);
             if (modelsArray.length === 0) {
                 modelsArray.push({ model: '', qty: '', prog: '', tasks: [] });
             }
@@ -2194,6 +2231,30 @@ document.addEventListener('DOMContentLoaded', () => {
             logsSection.style.display = 'block';
             renderModalLogs(rawOrder['Số lệnh sản xuất'] || rawOrder['ID']);
         }
+    };
+
+    window.cloneOrder = function(orderId) {
+        if (!window.productionOrdersList) return;
+        const rawOrder = window.productionOrdersList.find(o => o['Số lệnh sản xuất'] === orderId || o['ID'] === orderId);
+        if (!rawOrder) return;
+        
+        // Reuse editOrder to populate the UI
+        window.editOrder(orderId);
+        
+        // Modify form state to 'Add' instead of 'Edit'
+        document.getElementById('orderEditMode').value = 'false';
+        
+        let displayId = rawOrder['Số lệnh sản xuất'] || '';
+        if (displayId.endsWith('-LSX/KD')) displayId = displayId.replace('-LSX/KD', '');
+        
+        document.getElementById('orderId').value = displayId + '-P2';
+        document.getElementById('orderId').disabled = false;
+        
+        document.getElementById('saveOrderBtn').innerText = 'Lưu Lệnh Mới';
+        document.querySelector('.modal-header h3').innerText = 'Nhân Bản Đơn Hàng (Tách Đợt)';
+        
+        const logsSection = document.getElementById('orderLogsSection');
+        if (logsSection) logsSection.style.display = 'none';
     };
 
     window.deleteOrder = async function(orderId) {

@@ -246,6 +246,7 @@
                     <div class="section-header" style="margin-bottom: 1.5rem;">
                         <div class="prod-tabs">
                             <button class="prod-tab-btn active" data-tab="prod-orders"><i class="fa-solid fa-layer-group"></i> Đơn hàng</button>
+                            <button class="prod-tab-btn" data-tab="prod-tasks"><i class="fa-solid fa-list-check"></i> Bảng Công Việc</button>
                             <button class="prod-tab-btn" data-tab="prod-logs"><i class="fa-solid fa-book-journal-whills"></i> Nhật ký sản xuất</button>
                             <button class="prod-tab-btn" data-tab="prod-issues"><i class="fa-solid fa-triangle-exclamation"></i> Sự cố & Phản hồi</button>
                             <button class="prod-tab-btn" data-tab="prod-capacity"><i class="fa-solid fa-chart-pie"></i> Biểu đồ Năng suất</button>
@@ -319,6 +320,103 @@
                                 <button class="btn btn-sm btn-outline" id="ganttPageNext" disabled>Trang sau <i class="fa-solid fa-chevron-right"></i></button>
                             </div>
                         </div>
+                        </div>
+                    </div>
+
+                    <!-- BẢNG CÔNG VIỆC TAB -->
+                    <div class="prod-tab-content" id="prod-tasks">
+                        <div class="task-board-container panel" style="padding: 0; background: transparent; border: none; box-shadow: none;">
+                            <div class="task-board-header" style="background: #1e293b; color: white; padding: 1.5rem; text-align: left; border-bottom: 8px solid #c2410c;">
+                                <h2 style="margin: 0; font-size: 1.25rem; text-transform: uppercase; letter-spacing: 1px; color: white;">BẢNG THEO DÕI TIẾN ĐỘ CÔNG VIỆC — WORK PROGRESS BOARD</h2>
+                            </div>
+                            <div class="task-board-subtext" style="background: white; padding: 0.5rem 1.5rem; font-size: 0.85rem; color: #475569; border-bottom: 1px solid #e2e8f0; text-align: left;">
+                                Tổng hợp toàn bộ công việc — theo dõi % tiến độ, trạng thái và rủi ro theo thời gian thực
+                            </div>
+                            
+                            <div class="task-board-controls" style="background: white; padding: 1rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <label style="font-weight: 600; color: #1e293b;">Chọn Lệnh Sản Xuất:</label>
+                                    <select id="tbOrderSelect" class="form-control" style="width: 300px; padding: 0.4rem; border-color: var(--primary);">
+                                        <option value="">-- Chọn Đơn hàng để xem Công việc --</option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;" id="tbActionButtons" class="hidden">
+                                    <button class="btn btn-outline" id="tbBtnAddTask"><i class="fa-solid fa-plus"></i> Thêm Dòng</button>
+                                    <button class="btn btn-primary" id="tbBtnSave"><i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi</button>
+                                </div>
+                            </div>
+                            
+                            <div class="task-board-info" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; background: white; padding: 1.5rem; border-bottom: 1px solid #e2e8f0;">
+                                <div class="info-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <div class="info-row" style="display: flex; align-items: center;"><label style="width: 80px; font-size: 0.85rem; font-weight: 600; color: #1e293b;">Mã LSX / DA</label><input type="text" id="tbProjectName" class="form-control" style="flex: 1; padding: 0.4rem; font-size: 0.85rem; border-radius: 0; border: 1px solid #cbd5e1; background: #f8fafc;" readonly placeholder="Tự động điền"></div>
+                                    <div class="info-row" style="display: flex; align-items: flex-start;"><label style="width: 80px; font-size: 0.85rem; font-weight: 600; color: #1e293b; margin-top: 0.4rem;">Model(s)</label><textarea id="tbModelsInfo" class="form-control" style="flex: 1; padding: 0.4rem; font-size: 0.85rem; border-radius: 0; border: 1px solid #cbd5e1; background: #f8fafc; min-height: 40px; resize: vertical;" readonly placeholder="Danh sách model..."></textarea></div>
+                                </div>
+                                <div class="info-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <div class="info-row" style="display: flex; align-items: center;"><label style="width: 100px; font-size: 0.85rem; font-weight: 600; color: #1e293b;">Tổng số lượng:</label><input type="text" id="tbTotalQty" class="form-control" style="flex: 1; padding: 0.4rem; font-size: 0.85rem; border-radius: 0; border: 1px solid #cbd5e1; background: #f8fafc;" readonly placeholder="Tự động điền"></div>
+                                    <div class="info-row" style="display: flex; align-items: center;"><label style="width: 100px; font-size: 0.85rem; font-weight: 600; color: #1e293b;">Khách hàng:</label><input type="text" id="tbCustomer" class="form-control" style="flex: 1; padding: 0.4rem; font-size: 0.85rem; border-radius: 0; border: 1px solid #cbd5e1; background: #f8fafc;" readonly placeholder="Tự động điền"></div>
+                                </div>
+                                <div class="info-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <div class="info-row" style="display: flex; align-items: center;"><label style="width: 100px; font-size: 0.85rem; font-weight: 600; color: #1e293b;">Ngày bắt đầu:</label><input type="text" id="tbStartDate" class="form-control" style="flex: 1; padding: 0.4rem; font-size: 0.85rem; border-radius: 0; border: 1px solid #cbd5e1; background: #f8fafc;" readonly placeholder="Tự động điền"></div>
+                                    <div class="info-row" style="display: flex; align-items: center;"><label style="width: 100px; font-size: 0.85rem; font-weight: 600; color: #1e293b;">Ngày kết thúc:</label><input type="text" id="tbEndDate" class="form-control" style="flex: 1; padding: 0.4rem; font-size: 0.85rem; border-radius: 0; border: 1px solid #cbd5e1; background: #f8fafc;" readonly placeholder="Tự động điền"></div>
+                                </div>
+                                <div class="info-group" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <div class="info-row" style="display: flex; align-items: center;"><label style="width: 80px; font-size: 0.85rem; font-weight: 600; color: #1e293b;">Tiến độ:</label><input type="text" id="tbProgress" class="form-control" style="flex: 1; padding: 0.4rem; font-size: 0.85rem; border-radius: 0; border: 1px solid #cbd5e1; background: #f8fafc;" readonly placeholder="0%"></div>
+                                    <div class="info-row" style="display: flex; align-items: center;"><label style="width: 80px; font-size: 0.85rem; font-weight: 600; color: #1e293b;">Trạng thái:</label><input type="text" id="tbStatus" class="form-control" style="flex: 1; padding: 0.4rem; font-size: 0.85rem; border-radius: 0; border: 1px solid #cbd5e1; background: #f8fafc;" readonly placeholder="Trạng thái"></div>
+                                </div>
+                            </div>
+
+                            <div class="task-board-kpis" style="display: grid; grid-template-columns: repeat(6, 1fr); margin-top: 1.5rem; text-align: center;">
+                                <div class="kpi-card" style="background-color: #1e293b; color: white; padding: 0.5rem 0; border: 1px solid #fff;">
+                                    <div style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem;">TỔNG CÔNG VIỆC</div>
+                                    <div id="tbKpiTotal" style="font-size: 1.75rem; font-weight: 800; background: #f8fafc; color: #1e293b; padding: 0.5rem;">0</div>
+                                </div>
+                                <div class="kpi-card" style="background-color: #16a34a; color: white; padding: 0.5rem 0; border: 1px solid #fff;">
+                                    <div style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-check-square"></i> HOÀN THÀNH</div>
+                                    <div id="tbKpiCompleted" style="font-size: 1.75rem; font-weight: 800; background: #f0fdf4; color: #16a34a; padding: 0.5rem;">0</div>
+                                </div>
+                                <div class="kpi-card" style="background-color: #0ea5e9; color: white; padding: 0.5rem 0; border: 1px solid #fff;">
+                                    <div style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-spinner"></i> ĐANG THỰC HIỆN</div>
+                                    <div id="tbKpiProgress" style="font-size: 1.75rem; font-weight: 800; background: #e0f2fe; color: #0ea5e9; padding: 0.5rem;">0</div>
+                                </div>
+                                <div class="kpi-card" style="background-color: #d97706; color: white; padding: 0.5rem 0; border: 1px solid #fff;">
+                                    <div style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-pause"></i> TẠM DỪNG</div>
+                                    <div id="tbKpiPaused" style="font-size: 1.75rem; font-weight: 800; background: #fef3c7; color: #d97706; padding: 0.5rem;">0</div>
+                                </div>
+                                <div class="kpi-card" style="background-color: #dc2626; color: white; padding: 0.5rem 0; border: 1px solid #fff;">
+                                    <div style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-triangle-exclamation"></i> TRỄ TIẾN ĐỘ</div>
+                                    <div id="tbKpiDelayed" style="font-size: 1.75rem; font-weight: 800; background: #fee2e2; color: #dc2626; padding: 0.5rem;">0</div>
+                                </div>
+                                <div class="kpi-card" style="background-color: #c2410c; color: white; padding: 0.5rem 0; border: 1px solid #fff;">
+                                    <div style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-chart-pie"></i> % TỔNG THỂ</div>
+                                    <div id="tbKpiOverall" style="font-size: 1.75rem; font-weight: 800; background: #ffedd5; color: #c2410c; padding: 0.5rem;">0%</div>
+                                </div>
+                            </div>
+
+                            <div class="table-container" style="border-radius: 0; box-shadow: none; padding: 0;">
+                                <table class="data-table task-board-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem; background: white;">
+                                    <thead>
+                                        <tr style="background: #1e293b; color: white;">
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">STT</th>
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">Tên Công Việc</th>
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">Người Phụ Trách</th>
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">Bộ Phận</th>
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">Ngày BD</th>
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">Deadline</th>
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">% Kế Hoạch</th>
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">% Thực Tế</th>
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">Chênh Lệch</th>
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">Trạng Thái</th>
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">Mức Độ Ưu Tiên</th>
+                                            <th style="padding: 0.75rem; border: 1px solid #cbd5e1; text-align: center;">Ghi Chú / Rủi Ro</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbTasksTableBody">
+                                        <tr>
+                                            <td colspan="12" style="text-align: center; padding: 2rem; color: #64748b;">Vui lòng chọn một Lệnh Sản Xuất ở trên để xem danh sách công việc.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
@@ -679,5 +777,6 @@
     <datalist id="assigneeSuggestions"></datalist>
 
     <script src="script.js?v=5"></script>
+    <script src="script_extension.js?v=1"></script>
 </body>
 </html>

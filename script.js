@@ -485,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${startIndex + index + 1}
                         </div>
                         <div class="order-brief" style="width: 100%; min-width: 0;">
-                            <span class="ob-id" title="Bấm để copy mã lệnh" style="cursor: pointer;" onclick="window.copyOrderId(this, event, '${order.id.replace(/'/g, "\\'")}')">${order.id} <i class="fa-regular fa-copy" style="margin-left: 2px; opacity: 0.7;"></i></span>
+                            <span class="ob-id" title="Bấm để chuyển sang Bảng Công Việc" style="cursor: pointer; color: var(--primary);" onclick="window.jumpToTaskBoard(event, '${order.id.replace(/'/g, "\\'")}')">${order.id} <i class="fa-solid fa-arrow-right-to-bracket" style="margin-left: 2px; opacity: 0.7;"></i></span>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <span class="ob-title" title="${order.customerName}" style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 0.5rem;">${order.customerName}</span>
                                 <div class="ob-dates" style="font-size: 0.7rem; color: var(--gray-500); white-space: nowrap;">
@@ -1578,6 +1578,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderGanttOrders(orders, window.ganttBaseDate, window.GANTT_TOTAL_DAYS);
                 updateGanttDateRangeText(window.ganttBaseDate);
                 if (window.updateCapacityChart) window.updateCapacityChart();
+                if (window.updateTaskBoardSelect) window.updateTaskBoardSelect();
             } else {
                 initGanttGrid();
                 renderGanttOrders([]);
@@ -2564,4 +2565,332 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+});
+
+// ==========================================
+// TASK BOARD (BẢNG CÔNG VIỆC) LOGIC
+// ==========================================
+window.updateTaskBoardSelect = function() {
+    const select = document.getElementById('tbOrderSelect');
+    if (!select) return;
+    
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">-- Chọn Đơn hàng để xem Công việc --</option>';
+    
+    if (window.productionOrdersList && window.productionOrdersList.length > 0) {
+        window.productionOrdersList.forEach(order => {
+            const id = order['Số lệnh sản xuất'] || order['ID'];
+            const model = order['Model'] ? ` - ${order['Model']}` : '';
+            const text = `${id} | ${order['Khách hàng']}${model}`;
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = text;
+            select.appendChild(option);
+        });
+    }
+    
+    if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
+        select.value = currentValue;
+        window.renderTaskBoardForOrder(currentValue);
+    }
+};
+
+window.renderTaskBoardForOrder = function(orderId) {
+    if (!orderId) {
+        document.getElementById('tbProjectName').value = '';
+        document.getElementById('tbModelsInfo').value = '';
+        document.getElementById('tbTotalQty').value = '';
+        document.getElementById('tbCustomer').value = '';
+        document.getElementById('tbStartDate').value = '';
+        document.getElementById('tbEndDate').value = '';
+        document.getElementById('tbProgress').value = '';
+        document.getElementById('tbStatus').value = '';
+        
+        document.getElementById('tbKpiTotal').textContent = '0';
+        document.getElementById('tbKpiCompleted').textContent = '0';
+        document.getElementById('tbKpiProgress').textContent = '0';
+        document.getElementById('tbKpiPaused').textContent = '0';
+        document.getElementById('tbKpiDelayed').textContent = '0';
+        document.getElementById('tbKpiOverall').textContent = '0%';
+        
+        document.getElementById('tbTasksTableBody').innerHTML = '<tr id="tbEmptyRow"><td colspan="12" style="text-align: center; padding: 2rem; color: #64748b;">Vui lòng chọn một Lệnh Sản Xuất ở trên để xem danh sách công việc.</td></tr>';
+        const actionBtn = document.getElementById('tbActionButtons');
+        if (actionBtn) actionBtn.classList.add('hidden');
+        return;
+    }
+    
+    const actionBtn = document.getElementById('tbActionButtons');
+    if (actionBtn) actionBtn.classList.remove('hidden');
+    
+    const order = window.productionOrdersList.find(o => String(o['Số lệnh sản xuất'] || o['ID']) === String(orderId));
+    if (!order) return;
+    
+    document.getElementById('tbProjectName').value = order['Số lệnh sản xuất'] || '';
+
+    let modelsText = '';
+    if (window.parsedOrders) {
+        const pOrder = window.parsedOrders.find(o => String(o.id) === String(orderId));
+        if (pOrder && pOrder.products && pOrder.products.length > 0) {
+            modelsText = pOrder.products.map(p => p.name + ' (SL: ' + p.qty + ')').join('\n');
+        } else if (order['Model']) {
+            modelsText = order['Model'];
+        }
+    } else if (order['Model']) {
+        modelsText = order['Model'];
+    }
+    const tbModelsInfo = document.getElementById('tbModelsInfo');
+    if (tbModelsInfo) {
+        tbModelsInfo.value = modelsText;
+        tbModelsInfo.style.height = 'auto';
+        tbModelsInfo.style.height = (tbModelsInfo.scrollHeight) + 'px';
+    }
+    let totalQty = 0;
+    if (window.parsedOrders) {
+        const pOrder = window.parsedOrders.find(o => String(o.id) === String(orderId));
+        if (pOrder && pOrder.totalQty) {
+            totalQty = pOrder.totalQty;
+        } else if (pOrder && pOrder.products) {
+            totalQty = pOrder.products.reduce((sum, p) => sum + (parseInt(p.qty) || 0), 0);
+        }
+    }
+    const tbTotalQty = document.getElementById('tbTotalQty');
+    if (tbTotalQty) tbTotalQty.value = totalQty;
+    document.getElementById('tbCustomer').value = order['Khách hàng'] || '';
+    
+    const parseD = (d) => {
+        if(!d) return '';
+        const dt = new Date(d);
+        return isNaN(dt.getTime()) ? d : `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+    };
+    
+    document.getElementById('tbStartDate').value = parseD(order['Ngày bắt đầu']) || '';
+    document.getElementById('tbEndDate').value = parseD(order['Ngày kết thúc']) || parseD(order['Deadline']) || '';
+    
+    const overallProgress = order['Tiến độ'] || '0';
+    document.getElementById('tbProgress').value = (typeof overallProgress === 'number' || !String(overallProgress).includes('%')) ? `${overallProgress}%` : overallProgress;
+    document.getElementById('tbStatus').value = order['Trạng thái'] || 'Đang thực hiện';
+    
+    const tbody = document.getElementById('tbTasksTableBody');
+    tbody.innerHTML = '';
+    
+    let totalTasks = 0;
+    let completed = 0;
+    let inProgress = 0;
+    let paused = 0;
+    let delayed = 0;
+    
+    if (order.tasks && order.tasks.length > 0) {
+        totalTasks = order.tasks.length;
+        order.tasks.forEach((task, index) => {
+            const taskProgress = parseFloat(task['Tiến độ'] || task['Tiến độ Model'] || 0);
+            if (taskProgress >= 100) completed++;
+            else if (taskProgress > 0) inProgress++;
+            
+            let statusText = taskProgress >= 100 ? 'Hoàn thành' : (taskProgress > 0 ? 'Đang thực hiện' : 'Chưa bắt đầu');
+            let statusStyle = taskProgress >= 100 ? 'color: #16a34a; background: #dcfce7;' : (taskProgress > 0 ? 'color: #0ea5e9; background: #e0f2fe;' : 'color: #64748b;');
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="text-align: center; border: 1px solid #cbd5e1; padding: 0.2rem;">${index + 1}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 0.2rem;"><input type="text" class="tb-input-name" value="${task['Tên công việc'] || task['Model'] || ''}" style="width: 100%; border: none; outline: none; background: transparent;"></td>
+                <td style="border: 1px solid #cbd5e1; padding: 0.2rem;"><input type="text" class="tb-input-assignee" value="${task['Phụ trách'] || ''}" style="width: 100%; border: none; outline: none; background: transparent;"></td>
+                <td style="border: 1px solid #cbd5e1; padding: 0.2rem;">Sản xuất</td>
+                <td style="border: 1px solid #cbd5e1; padding: 0.2rem;"><input type="date" class="tb-input-start" value="${task['Ngày bắt đầu'] ? new Date(task['Ngày bắt đầu']).toISOString().split('T')[0] : ''}" style="width: 100%; border: none; outline: none; background: transparent; font-size: 0.8rem;"></td>
+                <td style="border: 1px solid #cbd5e1; padding: 0.2rem;"><input type="date" class="tb-input-end" value="${task['Ngày kết thúc'] ? new Date(task['Ngày kết thúc']).toISOString().split('T')[0] : ''}" style="width: 100%; border: none; outline: none; background: transparent; font-size: 0.8rem;"></td>
+                <td style="text-align: center; border: 1px solid #cbd5e1; padding: 0.2rem;">100%</td>
+                <td style="border: 1px solid #cbd5e1; padding: 0.2rem;"><input type="number" class="tb-input-progress" value="${taskProgress}" min="0" max="100" style="width: 50px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 0.2rem; text-align: center;">%</td>
+                <td style="text-align: center; border: 1px solid #cbd5e1; padding: 0.2rem; font-weight: bold; color: ${taskProgress<100 ? '#dc2626' : '#16a34a'};"><span class="tb-progress-diff">${taskProgress - 100}</span>%</td>
+                <td style="text-align: center; border: 1px solid #cbd5e1; padding: 0.2rem; ${statusStyle}">${statusText}</td>
+                <td style="border: 1px solid #cbd5e1; padding: 0.2rem;">
+                    <select class="tb-input-priority" style="width: 100%; border: none; outline: none; background: transparent; font-size: 0.8rem;">
+                        <option value="Bình thường">Bình thường</option>
+                        <option value="Cao" style="color: red;">Cao</option>
+                    </select>
+                </td>
+                <td style="border: 1px solid #cbd5e1; padding: 0.2rem;">
+                    <div style="display: flex; gap: 0.2rem;">
+                        <input type="text" class="tb-input-note" value="${task['Ghi chú'] || ''}" style="flex: 1; border: none; outline: none; background: transparent;">
+                        <button class="btn btn-sm btn-outline tb-btn-delete" style="padding: 0.1rem 0.3rem; color: #dc2626; border-color: #dc2626;"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </td>
+            `;
+            
+            const btnDelete = tr.querySelector('.tb-btn-delete');
+            if (btnDelete) btnDelete.addEventListener('click', () => tr.remove());
+            
+            const progressInput = tr.querySelector('.tb-input-progress');
+            if (progressInput) {
+                progressInput.addEventListener('input', (e) => {
+                    const val = parseFloat(e.target.value) || 0;
+                    const diffSpan = tr.querySelector('.tb-progress-diff');
+                    if (diffSpan) {
+                        diffSpan.textContent = val - 100;
+                        diffSpan.parentElement.style.color = val < 100 ? '#dc2626' : '#16a34a';
+                    }
+                });
+            }
+            
+            tbody.appendChild(tr);
+        });
+    } else {
+        tbody.innerHTML = '<tr id="tbEmptyRow"><td colspan="12" style="text-align: center; padding: 2rem; color: #64748b;">Đơn hàng này chưa có công việc nào. Bấm "Thêm Dòng" để tạo công việc mới.</td></tr>';
+    }
+    
+    document.getElementById('tbKpiTotal').textContent = totalTasks;
+    document.getElementById('tbKpiCompleted').textContent = completed;
+    document.getElementById('tbKpiProgress').textContent = inProgress;
+    document.getElementById('tbKpiPaused').textContent = paused;
+    document.getElementById('tbKpiDelayed').textContent = delayed;
+    document.getElementById('tbKpiOverall').textContent = document.getElementById('tbProgress').value;
+};
+
+window.tbAddNewTaskRow = function() {
+    const tbody = document.getElementById('tbTasksTableBody');
+    const emptyRow = document.getElementById('tbEmptyRow');
+    if (emptyRow) emptyRow.remove();
+    
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td style="text-align: center; border: 1px solid #cbd5e1; padding: 0.2rem;">Mới</td>
+        <td style="border: 1px solid #cbd5e1; padding: 0.2rem;"><input type="text" class="tb-input-name" placeholder="Nhập tên việc..." style="width: 100%; border: none; outline: none; background: transparent;"></td>
+        <td style="border: 1px solid #cbd5e1; padding: 0.2rem;"><input type="text" class="tb-input-assignee" placeholder="Người phụ trách..." style="width: 100%; border: none; outline: none; background: transparent;"></td>
+        <td style="border: 1px solid #cbd5e1; padding: 0.2rem;">Sản xuất</td>
+        <td style="border: 1px solid #cbd5e1; padding: 0.2rem;"><input type="date" class="tb-input-start" style="width: 100%; border: none; outline: none; background: transparent; font-size: 0.8rem;"></td>
+        <td style="border: 1px solid #cbd5e1; padding: 0.2rem;"><input type="date" class="tb-input-end" style="width: 100%; border: none; outline: none; background: transparent; font-size: 0.8rem;"></td>
+        <td style="text-align: center; border: 1px solid #cbd5e1; padding: 0.2rem;">100%</td>
+        <td style="border: 1px solid #cbd5e1; padding: 0.2rem;"><input type="number" class="tb-input-progress" value="0" min="0" max="100" style="width: 50px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 0.2rem; text-align: center;">%</td>
+        <td style="text-align: center; border: 1px solid #cbd5e1; padding: 0.2rem; font-weight: bold; color: #dc2626;"><span class="tb-progress-diff">-100</span>%</td>
+        <td style="text-align: center; border: 1px solid #cbd5e1; padding: 0.2rem; color: #64748b;">Chưa bắt đầu</td>
+        <td style="border: 1px solid #cbd5e1; padding: 0.2rem;">
+            <select class="tb-input-priority" style="width: 100%; border: none; outline: none; background: transparent; font-size: 0.8rem;">
+                <option value="Bình thường">Bình thường</option>
+                <option value="Cao" style="color: red;">Cao</option>
+            </select>
+        </td>
+        <td style="border: 1px solid #cbd5e1; padding: 0.2rem;">
+            <div style="display: flex; gap: 0.2rem;">
+                <input type="text" class="tb-input-note" placeholder="Ghi chú..." style="flex: 1; border: none; outline: none; background: transparent;">
+                <button class="btn btn-sm btn-outline tb-btn-delete" style="padding: 0.1rem 0.3rem; color: #dc2626; border-color: #dc2626;"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </td>
+    `;
+    
+    const btnDelete = tr.querySelector('.tb-btn-delete');
+    if (btnDelete) {
+        btnDelete.addEventListener('click', () => {
+            tr.remove();
+            if (tbody.children.length === 0) {
+                tbody.innerHTML = '<tr id="tbEmptyRow"><td colspan="12" style="text-align: center; padding: 2rem; color: #64748b;">Đơn hàng này chưa có công việc nào. Bấm "Thêm Dòng" để tạo công việc mới.</td></tr>';
+            }
+        });
+    }
+    
+    const progressInput = tr.querySelector('.tb-input-progress');
+    if (progressInput) {
+        progressInput.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value) || 0;
+            const diffSpan = tr.querySelector('.tb-progress-diff');
+            if (diffSpan) {
+                diffSpan.textContent = val - 100;
+                diffSpan.parentElement.style.color = val < 100 ? '#dc2626' : '#16a34a';
+            }
+        });
+    }
+    
+    tbody.appendChild(tr);
+};
+
+window.tbSaveChanges = async function() {
+    const orderId = document.getElementById('tbOrderSelect').value;
+    if (!orderId) {
+        alert("Vui lòng chọn một Lệnh Sản Xuất!");
+        return;
+    }
+    
+    const order = window.productionOrdersList.find(o => String(o['Số lệnh sản xuất'] || o['ID']) === String(orderId));
+    if (!order) return;
+    
+    const saveBtn = document.getElementById('tbBtnSave');
+    if (saveBtn) {
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...';
+        saveBtn.disabled = true;
+    }
+    
+    try {
+        const tbody = document.getElementById('tbTasksTableBody');
+        const rows = tbody.querySelectorAll('tr:not(#tbEmptyRow):not(.tb-model-group-row)');
+        const newTasks = [];
+        let totalProgress = 0;
+        
+        rows.forEach(row => {
+            const name = row.querySelector('.tb-input-name').value;
+            if (!name) return; // skip empty
+            
+            const assignee = row.querySelector('.tb-input-assignee').value;
+            const start = row.querySelector('.tb-input-start').value;
+            const end = row.querySelector('.tb-input-end').value;
+            const prog = row.querySelector('.tb-input-progress').value || 0;
+            const note = row.querySelector('.tb-input-note').value;
+            
+            totalProgress += parseInt(prog) || 0;
+            
+            newTasks.push({
+                'Mã LSX': orderId,
+                'Model': name, 
+                'Tên công việc': name,
+                'Phụ trách': assignee,
+                'Ngày bắt đầu': start,
+                'Ngày kết thúc': end,
+                'Tiến độ Model': prog,
+                'Tiến độ': prog,
+                'Ghi chú': note
+            });
+        });
+        
+        order.tasks = newTasks;
+        
+        if (newTasks.length > 0) {
+            order['Tiến độ'] = Math.round(totalProgress / newTasks.length);
+        }
+        
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'editOrder',
+                payload: order
+            })
+        });
+        
+        const result = await response.json();
+        if (result.status === 'success') {
+            alert('Lưu bảng công việc thành công!');
+            window.renderTaskBoardForOrder(orderId);
+            
+            if (typeof initGanttGrid === 'function' && window.ganttBaseDate) {
+                initGanttGrid(window.ganttBaseDate, window.GANTT_TOTAL_DAYS);
+                renderGanttOrders(window.productionOrdersList, window.ganttBaseDate, window.GANTT_TOTAL_DAYS);
+            }
+        } else {
+            alert('Lỗi: ' + (result.message || 'Lưu thất bại.'));
+        }
+    } catch (error) {
+        console.error("Error saving tasks:", error);
+        alert("Có lỗi xảy ra khi lưu. Vui lòng thử lại.");
+    } finally {
+        if (saveBtn) {
+            saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi';
+            saveBtn.disabled = false;
+        }
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        const select = document.getElementById('tbOrderSelect');
+        if (select) {
+            select.addEventListener('change', (e) => {
+                window.renderTaskBoardForOrder(e.target.value);
+            });
+        }
+    }, 500);
 });
